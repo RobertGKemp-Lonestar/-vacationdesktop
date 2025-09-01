@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Edit Profile - VacationDesktop{% endblock %}
+
+{% block content %}
+<div class="container-fluid fade-in">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'profile' %}">Profile</a></li>
+                    <li class="breadcrumb-item active">Edit Profile</li>
+                </ol>
+            </nav>
+            
+            <h1 class="mb-4">
+                <i class="fas fa-user-edit me-2"></i>Edit Profile
+                <small class="text-muted">{{ user.username }}</small>
+            </h1>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Profile Information</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                                    <i class="fas fa-user me-1"></i>First Name *
+                                </label>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.first_name.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                                    <i class="fas fa-user me-1"></i>Last Name *
+                                </label>
+                                {{ form.last_name }}
+                                {% if form.last_name.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.last_name.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">
+                                <i class="fas fa-envelope me-1"></i>Email Address *
+                            </label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.email.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.phone.id_for_label }}" class="form-label">
+                                    <i class="fas fa-phone me-1"></i>Phone Number
+                                </label>
+                                {{ form.phone }}
+                                {% if form.phone.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.phone.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.user_timezone.id_for_label }}" class="form-label">
+                                    <i class="fas fa-globe me-1"></i>Timezone
+                                </label>
+                                {{ form.user_timezone }}
+                                {% if form.user_timezone.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.user_timezone.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Save Changes
+                            </button>
+                            <a href="{% url 'profile' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-1"></i>Cancel
+                            </a>
+                        </div>
+                        
+                        <small class="text-muted d-block mt-2">* Required fields</small>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Account Information -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Account Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="small">
+                        <p class="mb-2">
+                            <strong>Username:</strong><br>
+                            <span class="text-muted">{{ user.username }}</span>
+                        </p>
+                        <p class="mb-2">
+                            <strong>Role:</strong><br>
+                            <span class="badge role-{{ user.role.name|lower|cut:'_' }}">
+                                {{ user.role.get_name_display }}
+                            </span>
+                        </p>
+                        <p class="mb-2">
+                            <strong>Organization:</strong><br>
+                            <span class="text-muted">{{ user.tenant.name|default:"System User" }}</span>
+                        </p>
+                        <p class="mb-0">
+                            <strong>Account Created:</strong><br>
+                            <span class="text-muted">{{ user.date_joined|date:"M j, Y" }}</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Security Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-lock me-2"></i>Security Settings</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'password_change' %}" class="btn btn-outline-warning btn-sm">
+                            <i class="fas fa-key me-1"></i>Change Password
+                        </a>
+                        
+                        {% if user.mfa_enabled %}
+                        <button class="btn btn-outline-danger btn-sm" disabled>
+                            <i class="fas fa-mobile-alt me-1"></i>Disable MFA
+                        </button>
+                        {% else %}
+                        <button class="btn btn-outline-success btn-sm" disabled>
+                            <i class="fas fa-mobile-alt me-1"></i>Enable MFA
+                        </button>
+                        {% endif %}
+                    </div>
+                    
+                    <hr class="my-3">
+                    
+                    <div class="small text-muted">
+                        <p class="mb-1">
+                            <strong>Last Login:</strong><br>
+                            {{ user.last_login|date:"M j, Y g:i A"|default:"Never" }}
+                        </p>
+                        <p class="mb-0">
+                            <strong>Last IP:</strong><br>
+                            {{ user.last_login_ip|default:"Unknown" }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Form validation
+        const form = document.querySelector('form');
+        const requiredFields = form.querySelectorAll('input[required]');
+        
+        form.addEventListener('submit', function(e) {
+            let hasErrors = false;
+            
+            requiredFields.forEach(function(field) {
+                if (!field.value.trim()) {
+                    hasErrors = true;
+                    field.classList.add('is-invalid');
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+            
+            if (hasErrors) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+            }
+        });
+        
+        // Real-time validation
+        requiredFields.forEach(function(field) {
+            field.addEventListener('blur', function() {
+                if (this.value.trim()) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.remove('is-valid');
+                    this.classList.add('is-invalid');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

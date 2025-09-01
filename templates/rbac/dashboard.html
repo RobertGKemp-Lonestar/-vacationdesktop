@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard - VacationDesktop{% endblock %}
+
+{% block content %}
+<div class="container-fluid fade-in">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                <small class="text-muted">{{ user.tenant.name|default:"System Administration" }}</small>
+            </h1>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        {% if user.is_system_user %}
+            <!-- System Admin Dashboard -->
+            <div class="col-md-3 mb-3">
+                <div class="dashboard-card">
+                    <h4>{{ stats.total_tenants }}</h4>
+                    <p><i class="fas fa-building me-2"></i>Total Tenants</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="dashboard-card green">
+                    <h4>{{ stats.active_tenants }}</h4>
+                    <p><i class="fas fa-check-circle me-2"></i>Active Tenants</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="dashboard-card orange">
+                    <h4>{{ stats.total_users }}</h4>
+                    <p><i class="fas fa-users me-2"></i>Total Users</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="dashboard-card blue">
+                    <h4>{{ stats.system_users }}</h4>
+                    <p><i class="fas fa-user-shield me-2"></i>System Users</p>
+                </div>
+            </div>
+        {% else %}
+            <!-- Client Dashboard -->
+            <div class="col-md-3 mb-3">
+                <div class="dashboard-card">
+                    <h4>{{ stats.tenant_users }}</h4>
+                    <p><i class="fas fa-users me-2"></i>Team Members</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="dashboard-card green">
+                    <h4>{{ stats.total_contacts }}</h4>
+                    <p><i class="fas fa-address-book me-2"></i>CRM Contacts</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="dashboard-card orange">
+                    <h4>{{ stats.active_campaigns }}</h4>
+                    <p><i class="fas fa-envelope me-2"></i>Active Campaigns</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="dashboard-card blue">
+                    <h4>{{ stats.pending_invoices }}</h4>
+                    <p><i class="fas fa-file-invoice-dollar me-2"></i>Pending Invoices</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="row">
+        <!-- Quick Actions -->
+        <div class="col-md-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    {% if user.is_system_user %}
+                        <!-- System Admin Quick Actions -->
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <a href="{% url 'admin:rbac_tenant_changelist' %}" class="btn btn-outline-primary btn-block w-100">
+                                    <i class="fas fa-building me-2"></i>Manage Tenants
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <a href="{% url 'admin:rbac_user_changelist' %}" class="btn btn-outline-success btn-block w-100">
+                                    <i class="fas fa-users me-2"></i>Manage Users
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <a href="{% url 'admin:rbac_auditlog_changelist' %}" class="btn btn-outline-info btn-block w-100">
+                                    <i class="fas fa-history me-2"></i>Audit Logs
+                                </a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- Client Quick Actions -->
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <a href="#" class="btn btn-outline-primary btn-block w-100">
+                                    <i class="fas fa-plus me-2"></i>New Contact
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <a href="#" class="btn btn-outline-success btn-block w-100">
+                                    <i class="fas fa-route me-2"></i>Create Trip
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <a href="#" class="btn btn-outline-info btn-block w-100">
+                                    <i class="fas fa-file-invoice me-2"></i>New Invoice
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- User Management (Client Admins) -->
+                        {% if user.role.name == 'CLIENT_ADMIN' %}
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <a href="{% url 'user_list' %}" class="btn btn-outline-primary btn-block w-100">
+                                    <i class="fas fa-users me-2"></i>Manage Users
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <a href="{% url 'add_user' %}" class="btn btn-outline-success btn-block w-100">
+                                    <i class="fas fa-user-plus me-2"></i>Add New User
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if user.can_access_financial_data %}
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <a href="#" class="btn btn-outline-warning btn-block w-100">
+                                    <i class="fas fa-chart-line me-2"></i>Financial Reports
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <a href="#" class="btn btn-outline-secondary btn-block w-100">
+                                    <i class="fas fa-credit-card me-2"></i>Payment Processing
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- User Info & MFA Status -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-user me-2"></i>Your Profile</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center" 
+                             style="width: 60px; height: 60px;">
+                            <i class="fas fa-user fa-2x text-white"></i>
+                        </div>
+                        <h6 class="mt-2">{{ user.get_full_name|default:user.username }}</h6>
+                        <span class="badge role-{{ user.role.name|lower|cut:'_' }}">
+                            {{ user.role.get_name_display }}
+                        </span>
+                    </div>
+                    
+                    <div class="small text-muted">
+                        <p class="mb-1"><i class="fas fa-envelope me-1"></i>{{ user.email }}</p>
+                        {% if user.phone %}
+                        <p class="mb-1"><i class="fas fa-phone me-1"></i>{{ user.phone }}</p>
+                        {% endif %}
+                        {% if user.tenant %}
+                        <p class="mb-1"><i class="fas fa-building me-1"></i>{{ user.tenant.name }}</p>
+                        {% endif %}
+                        <p class="mb-1"><i class="fas fa-clock me-1"></i>Last login: {{ user.last_login|date:"M j, Y g:i A" }}</p>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="text-center">
+                        {% if user.mfa_enabled %}
+                        <span class="badge bg-success mb-2">
+                            <i class="fas fa-shield-alt me-1"></i>MFA Enabled
+                        </span>
+                        {% else %}
+                        <span class="badge bg-warning mb-2">
+                            <i class="fas fa-exclamation-triangle me-1"></i>MFA Disabled
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid">
+                        <a href="#" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-cog me-1"></i>Profile Settings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    {% if recent_activity %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Action</th>
+                                    <th>Details</th>
+                                    <th>IP Address</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for activity in recent_activity %}
+                                <tr>
+                                    <td>
+                                        {% if activity.action == 'LOGIN' %}
+                                            <span class="badge bg-success"><i class="fas fa-sign-in-alt me-1"></i>{{ activity.get_action_display }}</span>
+                                        {% elif activity.action == 'LOGOUT' %}
+                                            <span class="badge bg-secondary"><i class="fas fa-sign-out-alt me-1"></i>{{ activity.get_action_display }}</span>
+                                        {% else %}
+                                            <span class="badge bg-primary">{{ activity.get_action_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ activity.resource_type|default:'-' }}</td>
+                                    <td><small class="text-muted">{{ activity.ip_address|default:'-' }}</small></td>
+                                    <td><small class="text-muted">{{ activity.created_at|timesince }} ago</small></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add some interactive functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-refresh activity every 5 minutes
+        setTimeout(function() {
+            location.reload();
+        }, 300000);
+    });
+</script>
+{% endblock %}

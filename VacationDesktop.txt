@@ -1,0 +1,51 @@
+#VacationDesktop
+
+- VacationDesktop is a multi tennant webbased application for use by Travel Advisors to help run their business 
+- Features
+  * Muti-Tennant system with MFA (Admin Panel)
+    ~ System Users
+      > Super Admin
+      > System Admin    
+      > Help Desk User
+    ~ Client Users
+      > Client Admin  
+      > Client User (Full access excipt financials unless expressly granted)
+  * Admin/Support/Sales System (For internal use)
+    >This will be an account Admin, supprot and sales tool used my VacationDesktop Employees to manage accounts,supoort tickets, and a sales tool to sell to potential clients and manage pipelines
+  * Client Relationship Manager
+    > This is a CRM for Travel Advisor Customers, and their trips
+  * Supplier Management System
+    > this is a tool for Travel Advisor to manage Supplier/Vendor Relationships.  Tour Operators, Cruise Lines, Resorts, Wholesales, Insurance, Etc.
+  * Forms Hub
+    > Custom Froms including Contact. Trip Planning, Credit Card Authorization, newsletter sign up
+  * Email Marketing System
+    > Allow System Users to send email campaings to potential customers
+    > Allow Travel Advisors to email to their maiing list and Trip List
+  * Trip Builder/Distribution
+    > Travel Advisors can build custom trips eitehr for their agency to sell or for specific customers
+  * Invoice System
+    > Travel Advisors can create invoices for trip and register paymetns and create payment schedules
+  * Payment System
+    > system customrs can register and pay for Vacation hub Products
+    > Travel Advisoers can accpet payments towards invoices
+  * Destination Hub
+    > This will be a high level Destination heirachy with destination travel information for Advisory Website
+      
+  * Tour Hub
+    > This will be a tool to collect and distribute Tour Itineraries on Travel Advisorts Website and include them in email marketing
+
+  * Cruise Hub
+    > This will be a tool to collect and distribute Cruise Itineraries on Travel Advisorts Website and include them in email marketing  
+   
+  * Network Portal
+    * Avisors advertise available group space to other advisors in teh network
+  * Public Portal
+    * A public portal highliding content build by travel advisors
+- Tech stack
+  * DJANGO
+  * Python
+  * Postgress or MySQL
+  * HTML/CSS/Javascript/PHP
+  * AJAX
+  
+  

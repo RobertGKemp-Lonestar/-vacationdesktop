@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+
+{% block title %}Client Management - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-building-user"></i> Client Management</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-2">
+                    <label for="type" class="form-label">Type</label>
+                    <select name="type" id="type" class="form-select">
+                        <option value="">All Types</option>
+                        {% for value, display in tenant_type_choices %}
+                            <option value="{{ value }}" {% if tenant_type_filter == value %}selected{% endif %}>
+                                {{ display }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-2">
+                    <label for="status" class="form-label">Status</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="">All Statuses</option>
+                        {% for value, display in status_choices %}
+                            <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>
+                                {{ display }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-6">
+                    <label for="search" class="form-label">Search</label>
+                    <input type="text" name="search" id="search" class="form-control" 
+                           value="{{ search }}" placeholder="Client name, subdomain, or email">
+                </div>
+                
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <div>
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="fas fa-search"></i> Filter
+                        </button>
+                        <a href="{% url 'staff_client_management' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> Clear
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Clients Table -->
+    <div class="card">
+        <div class="card-body">
+            {% if tenants %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Client Name</th>
+                            <th>Type & Status</th>
+                            <th>Contact Info</th>
+                            <th>Plan & Users</th>
+                            <th>Trial Period</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tenant in tenants %}
+                        <tr>
+                            <td>
+                                <div>
+                                    <strong>{{ tenant.name }}</strong>
+                                    <br>
+                                    <small class="text-muted">
+                                        <i class="fas fa-globe"></i> {{ tenant.subdomain }}.vacationdesktop.com
+                                    </small>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <span class="badge 
+                                        {% if tenant.tenant_type == 'CLIENT' %}bg-success
+                                        {% elif tenant.tenant_type == 'TRIAL' %}bg-warning text-dark
+                                        {% else %}bg-info{% endif %} mb-1">
+                                        {{ tenant.get_tenant_type_display }}
+                                    </span>
+                                    <br>
+                                    <span class="badge 
+                                        {% if tenant.status == 'ACTIVE' %}bg-success
+                                        {% elif tenant.status == 'TRIAL_EXPIRED' %}bg-danger
+                                        {% elif tenant.status == 'SUSPENDED' %}bg-warning text-dark
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ tenant.get_status_display }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <i class="fas fa-envelope"></i> {{ tenant.contact_email }}
+                                    {% if tenant.phone %}
+                                        <br><i class="fas fa-phone"></i> {{ tenant.phone }}
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <strong>{{ tenant.plan_type|title }}</strong> Plan
+                                    <br>
+                                    <small class="text-muted">
+                                        Max {{ tenant.max_users }} user{{ tenant.max_users|pluralize }}
+                                    </small>
+                                </div>
+                            </td>
+                            <td>
+                                {% if tenant.trial_start_date and tenant.trial_end_date %}
+                                    <div>
+                                        <small class="text-muted">
+                                            {{ tenant.trial_start_date|date:"M j, Y" }}
+                                            <br>
+                                            to {{ tenant.trial_end_date|date:"M j, Y" }}
+                                        </small>
+                                        {% if tenant.trial_end_date < today %}
+                                            <br><span class="badge bg-danger">Expired</span>
+                                        {% elif tenant.trial_end_date < next_week %}
+                                            <br><span class="badge bg-warning text-dark">Ending Soon</span>
+                                        {% endif %}
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div>
+                                    {{ tenant.created_at|date:"M j, Y" }}
+                                    <br>
+                                    <small class="text-muted">{{ tenant.created_at|time:"g:i A" }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-primary dropdown-toggle" 
+                                            type="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-cog"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item" href="{% url 'create_client_user' tenant.id %}">
+                                                <i class="fas fa-user-plus"></i> Add User
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{% url 'create_ticket' %}?tenant={{ tenant.id }}">
+                                                <i class="fas fa-ticket-alt"></i> Create Ticket
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item" href="{% url 'ticket_list' %}?search={{ tenant.name }}">
+                                                <i class="fas fa-list"></i> View Tickets
+                                            </a>
+                                        </li>
+                                        {% if user.role.name == 'SUPER_ADMIN' or user.role.name == 'SYSTEM_ADMIN' %}
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item" href="{% url 'admin:rbac_tenant_change' tenant.id %}">
+                                                <i class="fas fa-edit"></i> Admin Edit
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Clients pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page=1">First</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
+                    </li>
+                    {% endif %}
+                    
+                    <li class="page-item active">
+                        <span class="page-link">
+                            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                        </span>
+                    </li>
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.paginator.num_pages }}">Last</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-building fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">No clients found</h4>
+                <p class="text-muted mb-4">No clients match your current filters.</p>
+                <a href="{% url 'staff_client_management' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-refresh"></i> Clear Filters
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

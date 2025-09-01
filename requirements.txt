@@ -1,0 +1,36 @@
+# Core Django Framework
+Django==4.2.23
+python-decouple==3.8
+
+# Database
+psycopg2-binary==2.9.9  # PostgreSQL adapter
+
+# Authentication & Security
+django-otp==1.6.1  # Multi-Factor Authentication
+qrcode[pil]==8.2   # QR code generation for MFA
+Pillow==11.3.0     # Image processing
+
+# Production Web Server
+gunicorn==21.2.0   # WSGI HTTP Server
+whitenoise==6.5.0  # Static file serving
+
+# Caching & Sessions
+redis==4.6.0       # Redis client
+django-redis==5.3.0  # Django Redis cache backend
+
+# Monitoring & Logging
+sentry-sdk[django]==1.32.0  # Error monitoring
+django-extensions==3.2.3    # Development tools
+
+# Environment & Configuration
+python-dotenv==1.0.0  # Environment variables
+dj-database-url==2.1.0  # Database URL parsing for production
+
+# Production Utilities
+django-cors-headers==4.3.0  # CORS handling
+django-health-check==3.17.0  # Health check endpoints
+
+# Optional: Advanced Features
+celery==5.3.1      # Background task processing
+django-celery-beat==2.5.0  # Periodic tasks
+flower==2.0.1      # Celery monitoring

@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+
+{% block title %}Create User for {{ tenant.name }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-plus"></i> Create User for {{ tenant.name }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Tenant Info -->
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-building"></i> Client Information</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Name:</strong> {{ tenant.name }}</p>
+                                <p class="mb-1"><strong>Type:</strong> 
+                                    <span class="badge 
+                                        {% if tenant.tenant_type == 'CLIENT' %}bg-success
+                                        {% elif tenant.tenant_type == 'TRIAL' %}bg-warning text-dark
+                                        {% else %}bg-info{% endif %}">
+                                        {{ tenant.get_tenant_type_display }}
+                                    </span>
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Subdomain:</strong> {{ tenant.subdomain }}.vacationdesktop.com</p>
+                                <p class="mb-1"><strong>Contact:</strong> {{ tenant.contact_email }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
+                                <input type="text" name="username" id="username" class="form-control" 
+                                       required maxlength="150" placeholder="Enter unique username">
+                                <div class="form-text">Must be unique across all clients</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                                <input type="email" name="email" id="email" class="form-control" 
+                                       required maxlength="254" placeholder="user@example.com">
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="first_name" class="form-label">First Name</label>
+                                <input type="text" name="first_name" id="first_name" class="form-control" 
+                                       maxlength="150" placeholder="First name">
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="last_name" class="form-label">Last Name</label>
+                                <input type="text" name="last_name" id="last_name" class="form-control" 
+                                       maxlength="150" placeholder="Last name">
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+                                <input type="password" name="password" id="password" class="form-control" 
+                                       required minlength="8" placeholder="Enter secure password">
+                                <div class="form-text">Minimum 8 characters</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="role" class="form-label">Role <span class="text-danger">*</span></label>
+                                <select name="role" id="role" class="form-select" required>
+                                    {% for role in client_roles %}
+                                        <option value="{{ role.name }}" {% if role.name == 'CLIENT_USER' %}selected{% endif %}>
+                                            {{ role.get_name_display }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_tenant_admin" 
+                                       id="is_tenant_admin" value="true">
+                                <label class="form-check-label" for="is_tenant_admin">
+                                    <strong>Tenant Administrator</strong>
+                                </label>
+                                <div class="form-text">
+                                    Tenant administrators can manage other users within their organization
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Role Descriptions -->
+                        <div class="alert alert-light">
+                            <h6><i class="fas fa-info-circle"></i> Role Descriptions</h6>
+                            <div class="row">
+                                {% for role in client_roles %}
+                                <div class="col-md-6 mb-2">
+                                    <strong>{{ role.get_name_display }}:</strong>
+                                    <small class="text-muted d-block">{{ role.description }}</small>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'staff_client_management' %}" class="btn btn-secondary me-2">
+                                <i class="fas fa-arrow-left"></i> Back to Clients
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-user-plus"></i> Create User
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-focus the username field
+    document.getElementById('username').focus();
+    
+    // Role change handler to update tenant admin checkbox
+    const roleSelect = document.getElementById('role');
+    const tenantAdminCheck = document.getElementById('is_tenant_admin');
+    
+    function updateTenantAdminState() {
+        const selectedRole = roleSelect.value;
+        if (selectedRole === 'CLIENT_ADMIN') {
+            tenantAdminCheck.checked = true;
+            tenantAdminCheck.disabled = true;
+        } else {
+            tenantAdminCheck.disabled = false;
+            if (selectedRole === 'CLIENT_USER') {
+                tenantAdminCheck.checked = false;
+            }
+        }
+    }
+    
+    roleSelect.addEventListener('change', updateTenantAdminState);
+    updateTenantAdminState(); // Set initial state
+});
+</script>
+{% endblock %}

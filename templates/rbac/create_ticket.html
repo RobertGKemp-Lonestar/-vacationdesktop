@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Support Ticket - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-plus"></i> Create New Support Ticket
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="tenant" class="form-label">Client <span class="text-danger">*</span></label>
+                                <select name="tenant" id="tenant" class="form-select" required>
+                                    <option value="">Select a client...</option>
+                                    {% for tenant in tenants %}
+                                        <option value="{{ tenant.id }}">
+                                            {{ tenant.name }} 
+                                            {% if tenant.tenant_type != 'CLIENT' %}
+                                                ({{ tenant.get_tenant_type_display }})
+                                            {% endif %}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Select the client this ticket is for</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="created_for" class="form-label">Created For (Optional)</label>
+                                <select name="created_for" id="created_for" class="form-select">
+                                    <option value="">Select client user...</option>
+                                </select>
+                                <div class="form-text">Choose the specific client user who will receive notifications</div>
+                                <div id="user-loading" class="form-text text-primary d-none">
+                                    <i class="fas fa-spinner fa-spin"></i> Loading users...
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            
+                            <div class="col-md-3">
+                                <label for="priority" class="form-label">Priority <span class="text-danger">*</span></label>
+                                <select name="priority" id="priority" class="form-select" required>
+                                    {% for value, display in priority_choices %}
+                                        <option value="{{ value }}" {% if value == 'MEDIUM' %}selected{% endif %}>
+                                            {{ display }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <label for="category" class="form-label">Category</label>
+                                <select name="category" id="category" class="form-select">
+                                    {% for value, display in category_choices %}
+                                        <option value="{{ value }}" {% if value == 'OTHER' %}selected{% endif %}>
+                                            {{ display }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="subject" class="form-label">Subject <span class="text-danger">*</span></label>
+                            <input type="text" name="subject" id="subject" class="form-control" 
+                                   maxlength="200" required placeholder="Brief description of the issue">
+                            <div class="form-text">Enter a clear, concise subject line</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
+                            <textarea name="description" id="description" class="form-control" 
+                                      rows="8" required placeholder="Detailed description of the issue, steps to reproduce, expected behavior, etc."></textarea>
+                            <div class="form-text">Provide as much detail as possible to help resolve the issue quickly</div>
+                        </div>
+                        
+                        <!-- Priority Guidelines -->
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle"></i> Priority Guidelines</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <strong class="text-danger">High Priority:</strong>
+                                    <ul class="mb-0 small">
+                                        <li>System down/critical failure</li>
+                                        <li>Security issue</li>
+                                        <li>Data loss</li>
+                                        <li>Payment processing failure</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-4">
+                                    <strong class="text-warning">Medium Priority:</strong>
+                                    <ul class="mb-0 small">
+                                        <li>Feature not working correctly</li>
+                                        <li>Performance issues</li>
+                                        <li>User workflow disruption</li>
+                                        <li>Integration problems</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-4">
+                                    <strong class="text-secondary">Low Priority:</strong>
+                                    <ul class="mb-0 small">
+                                        <li>Cosmetic issues</li>
+                                        <li>Feature requests</li>
+                                        <li>Questions/how-to</li>
+                                        <li>Minor bugs</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'ticket_list' %}" class="btn btn-secondary me-2">
+                                <i class="fas fa-arrow-left"></i> Back to Tickets
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-ticket-alt"></i> Create Ticket
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-focus the tenant field
+    document.getElementById('tenant').focus();
+    
+    // Priority change handler to show appropriate styling
+    const prioritySelect = document.getElementById('priority');
+    function updatePriorityStyle() {
+        const priority = prioritySelect.value;
+        prioritySelect.className = 'form-select';
+        if (priority === 'HIGH') {
+            prioritySelect.classList.add('border-danger');
+        } else if (priority === 'MEDIUM') {
+            prioritySelect.classList.add('border-warning');
+        }
+    }
+    
+    prioritySelect.addEventListener('change', updatePriorityStyle);
+    updatePriorityStyle(); // Set initial style
+    
+    // Handle tenant selection to load client users
+    const tenantSelect = document.getElementById('tenant');
+    const createdForSelect = document.getElementById('created_for');
+    const userLoading = document.getElementById('user-loading');
+    
+    tenantSelect.addEventListener('change', function() {
+        const tenantId = this.value;
+        
+        // Clear the created_for dropdown
+        createdForSelect.innerHTML = '<option value="">Select client user...</option>';
+        
+        if (!tenantId) {
+            return;
+        }
+        
+        // Show loading indicator
+        userLoading.classList.remove('d-none');
+        createdForSelect.disabled = true;
+        
+        // Fetch users for this tenant
+        fetch(`{% url 'get_tenant_users_ajax' %}?tenant_id=${tenantId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Error loading users:', data.error);
+                    createdForSelect.innerHTML = '<option value="">Error loading users</option>';
+                } else {
+                    // Populate the dropdown with users
+                    createdForSelect.innerHTML = '<option value="">Select client user...</option>';
+                    data.users.forEach(user => {
+                        const option = document.createElement('option');
+                        option.value = user.id;
+                        option.textContent = `${user.name} (${user.email})`;
+                        createdForSelect.appendChild(option);
+                    });
+                    
+                    if (data.users.length === 0) {
+                        createdForSelect.innerHTML = '<option value="">No users found for this client</option>';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                createdForSelect.innerHTML = '<option value="">Error loading users</option>';
+            })
+            .finally(() => {
+                // Hide loading indicator
+                userLoading.classList.add('d-none');
+                createdForSelect.disabled = false;
+            });
+    });
+});
+</script>
+{% endblock %}

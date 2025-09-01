@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Users{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="fas fa-users"></i> Manage Users</h2>
+                    <p class="text-muted">View and manage users in your organization</p>
+                </div>
+                {% if can_add_user %}
+                <a href="{% url 'add_user' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add New User
+                </a>
+                {% endif %}
+            </div>
+
+            {% if users %}
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Tenant</th>
+                                    <th>Status</th>
+                                    <th>Last Login</th>
+                                    {% if can_edit_users %}
+                                    <th>Actions</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ user.username }}</strong>
+                                        {% if user.mfa_enabled %}
+                                        <span class="badge badge-success" title="MFA Enabled">
+                                            <i class="fas fa-shield-alt"></i> MFA
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.first_name or user.last_name %}
+                                        {{ user.first_name }} {{ user.last_name }}
+                                        {% else %}
+                                        <em class="text-muted">Not set</em>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ user.email|default:"Not set" }}</td>
+                                    <td>
+                                        <span class="badge badge-{% if user.role.name == 'SUPER_ADMIN' %}danger{% elif user.role.name == 'SYSTEM_ADMIN' %}warning{% elif user.role.name == 'CLIENT_ADMIN' %}info{% else %}secondary{% endif %}">
+                                            {% if user.role.name == 'SUPER_ADMIN' %}Super Admin
+                                            {% elif user.role.name == 'SYSTEM_ADMIN' %}System Admin
+                                            {% elif user.role.name == 'CLIENT_ADMIN' %}Client Admin
+                                            {% elif user.role.name == 'CLIENT_USER' %}Client User
+                                            {% elif user.role.name == 'HELPDESK_USER' %}Helpdesk User
+                                            {% else %}{{ user.role.name|capfirst }}{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if user.tenant %}
+                                        {{ user.tenant.name }}
+                                        {% else %}
+                                        <em class="text-muted">System User</em>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.is_active %}
+                                        <span class="badge badge-success">Active</span>
+                                        {% else %}
+                                        <span class="badge badge-danger">Inactive</span>
+                                        {% endif %}
+                                        {% if user.has_financial_access %}
+                                        <span class="badge badge-info" title="Has Financial Access">
+                                            <i class="fas fa-dollar-sign"></i>
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.last_login %}
+                                        {{ user.last_login|date:"M d, Y H:i" }}
+                                        {% else %}
+                                        <em class="text-muted">Never</em>
+                                        {% endif %}
+                                    </td>
+                                    {% if can_edit_users %}
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            {% if user != request.user %}
+                                            <a href="{% url 'edit_user' user.id %}" class="btn btn-outline-primary" title="Edit User">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'change_user_password' user.id %}" class="btn btn-outline-warning" title="Change Password">
+                                                <i class="fas fa-key"></i>
+                                            </a>
+                                            {% else %}
+                                            <span class="text-muted small">You</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Users Found</h4>
+                    <p class="text-muted">There are no users in your organization yet.</p>
+                    {% if can_add_user %}
+                    <a href="{% url 'add_user' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add Your First User
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="mt-4">
+                <h5><i class="fas fa-info-circle"></i> User Management Guide</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card border-left-primary">
+                            <div class="card-body">
+                                <h6 class="card-title">Role Permissions</h6>
+                                <p class="card-text small text-muted">
+                                    Client Admins can add and manage Client Users within their organization.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-left-success">
+                            <div class="card-body">
+                                <h6 class="card-title">Security Features</h6>
+                                <p class="card-text small text-muted">
+                                    Users can enable MFA and have financial access controls for enhanced security.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-left-info">
+                            <div class="card-body">
+                                <h6 class="card-title">Audit Trail</h6>
+                                <p class="card-text small text-muted">
+                                    All user management actions are logged for security and compliance.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

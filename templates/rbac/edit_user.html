@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-edit"></i> {{ title }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.email.id_for_label }}">
+                                        {{ form.email.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.email }}
+                                    {% if form.email.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.email.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.phone.id_for_label }}">
+                                        {{ form.phone.label }}
+                                    </label>
+                                    {{ form.phone }}
+                                    {% if form.phone.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.phone.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.first_name.id_for_label }}">
+                                        {{ form.first_name.label }}
+                                    </label>
+                                    {{ form.first_name }}
+                                    {% if form.first_name.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.first_name.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.last_name.id_for_label }}">
+                                        {{ form.last_name.label }}
+                                    </label>
+                                    {{ form.last_name }}
+                                    {% if form.last_name.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.last_name.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Role and Permissions -->
+                        <hr>
+                        <h5 class="text-muted mb-3">
+                            <i class="fas fa-user-shield"></i> Role & Permissions
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.role.id_for_label }}">
+                                        {{ form.role.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.role }}
+                                    {% if form.role.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.role.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">
+                                        Defines what the user can access and do
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <div class="form-check mt-2">
+                                        {{ form.has_financial_access }}
+                                        <label for="{{ form.has_financial_access.id_for_label }}" class="form-check-label">
+                                            {{ form.has_financial_access.label }}
+                                        </label>
+                                        {% if form.has_financial_access.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.has_financial_access.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                        <small class="form-text text-muted d-block">
+                                            Allow access to financial data and payments
+                                        </small>
+                                    </div>
+                                    
+                                    <div class="form-check mt-3">
+                                        {{ form.is_active }}
+                                        <label for="{{ form.is_active.id_for_label }}" class="form-check-label">
+                                            {{ form.is_active.label }}
+                                        </label>
+                                        {% if form.is_active.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.is_active.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                        <small class="form-text text-muted d-block">
+                                            Inactive users cannot log in
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- User Information Display -->
+                        <hr>
+                        <h5 class="text-muted mb-3">
+                            <i class="fas fa-info-circle"></i> Account Information
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <strong>Username:</strong><br>
+                                <span class="text-muted">{{ user_to_edit.username }}</span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Last Login:</strong><br>
+                                <span class="text-muted">
+                                    {% if user_to_edit.last_login %}
+                                        {{ user_to_edit.last_login|date:"M d, Y H:i" }}
+                                    {% else %}
+                                        Never logged in
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>MFA Status:</strong><br>
+                                {% if user_to_edit.mfa_enabled %}
+                                    <span class="badge badge-success">
+                                        <i class="fas fa-shield-alt"></i> Enabled
+                                    </span>
+                                {% else %}
+                                    <span class="badge badge-secondary">Disabled</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <hr>
+                        <div class="form-group mb-0">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Update User
+                            </button>
+                            <a href="{% url 'change_user_password' user_to_edit.id %}" class="btn btn-warning ml-2">
+                                <i class="fas fa-key"></i> Change Password
+                            </a>
+                            <a href="{% url 'user_list' %}" class="btn btn-secondary ml-2">
+                                <i class="fas fa-arrow-left"></i> Back to Users
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Security Notice -->
+            <div class="alert alert-warning mt-4">
+                <h6><i class="fas fa-exclamation-triangle"></i> Important</h6>
+                <p class="mb-0">
+                    Changes to user roles and permissions take effect immediately. 
+                    Deactivating a user will prevent them from logging in but preserve their data.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
