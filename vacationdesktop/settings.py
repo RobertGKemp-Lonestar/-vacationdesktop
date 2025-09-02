@@ -22,7 +22,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY')
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-build-key-only-for-railway-build-phase')
+
+# Safety check - ensure we're not using build key in production
+if not DEBUG and 'build-key-only' in SECRET_KEY:
+    raise Exception("Production SECRET_KEY not set! Using build fallback key is not secure.")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
@@ -92,12 +96,12 @@ if DATABASE_URL:
         'default': dj_database_url.parse(DATABASE_URL)
     }
 else:
-    # Development: Use individual PostgreSQL settings
+    # Development or build phase: Use individual PostgreSQL settings
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': config('DB_NAME'),
-            'USER': config('DB_USER'),
+            'NAME': config('DB_NAME', default='vacationdesktop'),
+            'USER': config('DB_USER', default='postgres'),
             'PASSWORD': config('DB_PASSWORD', default=''),
             'HOST': config('DB_HOST', default='localhost'),
             'PORT': config('DB_PORT', default='5432'),
