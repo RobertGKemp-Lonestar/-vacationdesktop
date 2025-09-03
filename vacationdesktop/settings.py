@@ -32,8 +32,14 @@ if not DEBUG and 'build-key-only' in SECRET_KEY:
     raise Exception("Production SECRET_KEY not set! Using build fallback key is not secure.")
 
 # ALLOWED_HOSTS configuration
-ALLOWED_HOSTS_ENV = config('ALLOWED_HOSTS', default='127.0.0.1,localhost,192.168.86.26')
+ALLOWED_HOSTS_ENV = config('ALLOWED_HOSTS', default='127.0.0.1,localhost,192.168.86.26,web-production-c5d67.up.railway.app')
 ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_ENV.split(',') if host.strip()]
+
+# Add Railway domain if not in production DEBUG mode
+if not DEBUG:
+    railway_domain = config('RAILWAY_STATIC_URL', default='').replace('https://', '').replace('http://', '')
+    if railway_domain and railway_domain not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(railway_domain)
 
 
 # Application definition
