@@ -40,12 +40,12 @@ def create_admin_sql():
             print("All tables:", all_tables)
             
             # Delete existing admin user if exists
-            cursor.execute("DELETE FROM rbac_user WHERE username = %s", [username])
+            cursor.execute("DELETE FROM users WHERE username = %s", [username])
             print(f"Deleted existing user {username}")
             
-            # Insert new admin user
+            # Insert new admin user into 'users' table
             cursor.execute("""
-                INSERT INTO rbac_user (
+                INSERT INTO users (
                     username, email, first_name, last_name,
                     password, is_staff, is_superuser, is_active,
                     date_joined
