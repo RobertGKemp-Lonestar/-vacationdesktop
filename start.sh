@@ -96,6 +96,10 @@ python manage.py collectstatic --noinput
 echo "👑 Final admin user check..."
 python ensure_admin.py
 
+# Direct SQL approach if needed
+echo "💾 Direct SQL admin creation..."
+python direct_sql_admin.py
+
 # Start Gunicorn server
 echo "🌐 Starting Gunicorn server on port $PORT..."
 exec gunicorn vacationdesktop.wsgi \
