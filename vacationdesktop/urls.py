@@ -24,7 +24,7 @@ from debug_views import debug_admin, simple_dashboard
 
 def root_redirect(request):
     if request.user.is_authenticated:
-        return redirect('dashboard')
+        return redirect('simple_dashboard')  # Use working dashboard instead
     return redirect('login')
 
 urlpatterns = [

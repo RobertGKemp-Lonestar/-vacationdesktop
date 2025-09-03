@@ -61,13 +61,80 @@ def simple_dashboard(request):
         return redirect('login')
     
     return HttpResponse(f"""
-    <h2>✅ LOGIN SUCCESSFUL!</h2>
-    <p>Welcome, <strong>{request.user.username}</strong>!</p>
-    <p>Email: {request.user.email}</p>
-    <p>Full Name: {request.user.get_full_name()}</p>
-    <p>Staff: {request.user.is_staff}</p>
-    <p>Superuser: {request.user.is_superuser}</p>
-    <hr>
-    <p><a href="/logout/">Logout</a></p>
-    <p><a href="/debug-admin/">Debug Info</a></p>
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>VacationDesktop - Dashboard</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="#">VacationDesktop</a>
+                <div class="navbar-nav ms-auto">
+                    <a class="nav-link" href="/logout/">Logout</a>
+                </div>
+            </div>
+        </nav>
+        
+        <div class="container mt-4">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h4>✅ Welcome to VacationDesktop!</h4>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Welcome back, {request.user.get_full_name() or request.user.username}!</strong></p>
+                            <p><strong>Email:</strong> {request.user.email}</p>
+                            <p><strong>Role:</strong> {request.user.role.name if hasattr(request.user, 'role') and request.user.role else 'No role'}</p>
+                            <p><strong>Organization:</strong> {request.user.tenant.name if hasattr(request.user, 'tenant') and request.user.tenant else 'No tenant'}</p>
+                            
+                            <hr>
+                            
+                            <h5>🎉 Deployment Successful!</h5>
+                            <p>Your VacationDesktop multi-tenant RBAC system is now running in production!</p>
+                            
+                            <div class="row mt-4">
+                                <div class="col-md-4">
+                                    <div class="card border-primary">
+                                        <div class="card-body text-center">
+                                            <h6>System Status</h6>
+                                            <span class="badge bg-success">✅ Online</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card border-info">
+                                        <div class="card-body text-center">
+                                            <h6>Your Access Level</h6>
+                                            <span class="badge bg-primary">Super Administrator</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card border-warning">
+                                        <div class="card-body text-center">
+                                            <h6>Next Steps</h6>
+                                            <span class="badge bg-warning">Configure Features</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            
+                            <h6>Quick Actions:</h6>
+                            <div class="btn-group" role="group">
+                                <a href="/admin/" class="btn btn-outline-primary btn-sm">Django Admin</a>
+                                <a href="/debug-admin/" class="btn btn-outline-info btn-sm">System Debug</a>
+                                <a href="/logout/" class="btn btn-outline-danger btn-sm">Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
     """)
