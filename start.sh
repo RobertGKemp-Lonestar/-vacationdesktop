@@ -26,30 +26,10 @@ if [ -z "$PORT" ]; then
     export PORT=8000
 fi
 
-# Wait for database to be ready (with retries)
-echo "🔄 Waiting for database to be ready..."
+# Wait for database with Django's connection handling
+echo "🔄 Waiting for database to be ready with Django..."
 for i in {1..30}; do
-    if python -c "
-import os
-import psycopg2
-from urllib.parse import urlparse
-
-url = urlparse(os.environ['DATABASE_URL'])
-try:
-    conn = psycopg2.connect(
-        host=url.hostname,
-        port=url.port or 5432,
-        user=url.username,
-        password=url.password,
-        database=url.path.lstrip('/')
-    )
-    conn.close()
-    print('Database connection successful!')
-    exit(0)
-except Exception as e:
-    print(f'Database not ready: {e}')
-    exit(1)
-"; then
+    if python manage.py check --database default; then
         echo "✅ Database is ready!"
         break
     else
