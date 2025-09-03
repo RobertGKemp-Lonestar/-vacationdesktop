@@ -26,12 +26,13 @@ def db_test(request):
 def model_test(request):
     """Test importing our models"""
     try:
-        # Test basic imports
-        from django.contrib.auth.models import User as DjangoUser
-        django_user_count = DjangoUser.objects.count()
+        # Test basic imports using get_user_model instead
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        user_count = User.objects.count()
         
         result = [f"<h2>🔍 Model Import Test</h2>"]
-        result.append(f"<p>✅ Django User model: {django_user_count} users</p>")
+        result.append(f"<p>✅ Custom User model: {user_count} users</p>")
         
         # Test our custom models one by one
         try:
@@ -48,12 +49,7 @@ def model_test(request):
         except Exception as e:
             result.append(f"<p>❌ Tenant model error: {str(e)}</p>")
         
-        try:
-            from rbac.models import User
-            user_count = User.objects.count()
-            result.append(f"<p>✅ Custom User model: {user_count} users</p>")
-        except Exception as e:
-            result.append(f"<p>❌ Custom User model error: {str(e)}</p>")
+        # Skip duplicate User model test since we already tested it above
         
         return HttpResponse(''.join(result))
         

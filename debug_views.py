@@ -1,6 +1,9 @@
 from django.http import HttpResponse
 from django.shortcuts import redirect
-from rbac.models import User, Role, Tenant
+from django.contrib.auth import get_user_model
+from rbac.models import Role, Tenant
+
+User = get_user_model()
 
 def debug_admin(request):
     """Debug admin user and system state"""
