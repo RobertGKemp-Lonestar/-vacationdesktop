@@ -45,6 +45,14 @@ done
 echo "📊 Running database migrations..."
 python manage.py migrate --noinput
 
+# Setup RBAC system
+echo "🔐 Setting up RBAC system..."
+python manage.py setup_rbac
+
+# Create admin user (one-time)
+echo "👤 Creating admin user..."
+python create_admin.py
+
 # Collect static files
 echo "📁 Collecting static files..."
 python manage.py collectstatic --noinput
