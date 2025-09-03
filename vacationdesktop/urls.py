@@ -22,6 +22,7 @@ from django.conf.urls.static import static
 from rbac.views import create_emergency_admin, fix_existing_admin
 from debug_views import debug_admin, simple_dashboard
 from simple_login import emergency_login
+from minimal_test import minimal_test
 
 def root_redirect(request):
     if request.user.is_authenticated:
@@ -36,6 +37,7 @@ urlpatterns = [
     path('debug-admin/', debug_admin, name='debug_admin'),
     path('simple-dashboard/', simple_dashboard, name='simple_dashboard'),
     path('emergency-login/', emergency_login, name='emergency_login'),
+    path('test/', minimal_test, name='minimal_test'),
     path('', include('rbac.urls')),
 ]
 
