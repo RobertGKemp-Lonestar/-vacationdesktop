@@ -1,0 +1,5 @@
+[phases.build]
+cmds = ['echo "Skipping migrations in build phase"']
+
+[phases.start]
+cmd = './start.sh'
