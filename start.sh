@@ -45,6 +45,10 @@ done
 echo "📊 Running database migrations..."
 python manage.py migrate --noinput
 
+# Create cache table if using database cache (Railway fallback)
+echo "🗄️ Creating cache table if needed..."
+python manage.py createcachetable || echo "Cache table may already exist or not needed"
+
 # Setup RBAC system
 echo "🔐 Setting up RBAC system..."
 python manage.py setup_rbac
