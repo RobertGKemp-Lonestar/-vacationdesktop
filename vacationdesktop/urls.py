@@ -20,6 +20,7 @@ from django.shortcuts import redirect
 from django.conf import settings
 from django.conf.urls.static import static
 from rbac.views import create_emergency_admin, fix_existing_admin
+from debug_views import debug_admin, simple_dashboard
 
 def root_redirect(request):
     if request.user.is_authenticated:
@@ -31,6 +32,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('emergency-admin-setup/', create_emergency_admin, name='emergency_admin'),
     path('fix-admin/', fix_existing_admin, name='fix_admin'),
+    path('debug-admin/', debug_admin, name='debug_admin'),
+    path('simple-dashboard/', simple_dashboard, name='simple_dashboard'),
     path('', include('rbac.urls')),
 ]
 
