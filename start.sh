@@ -7,16 +7,10 @@ echo "🚀 Starting VacationDesktop deployment..."
 # Debug environment
 echo "PORT: $PORT"
 echo "SECRET_KEY set: $([ -n "$SECRET_KEY" ] && echo "YES" || echo "NO")"
+echo "DATABASE_PUBLIC_URL set: $([ -n "$DATABASE_PUBLIC_URL" ] && echo "YES" || echo "NO")"
 echo "DATABASE_URL set: $([ -n "$DATABASE_URL" ] && echo "YES" || echo "NO")"
-echo "DATABASE_URL (first 50 chars): ${DATABASE_URL:0:50}..."
-
-# Fix DATABASE_URL if it contains railway.internal
-if [[ "$DATABASE_URL" == *"railway.internal"* ]]; then
-    echo "⚠️ Fixing DATABASE_URL with railway.internal hostname"
-    # Extract connection details and use public hostname
-    # This is a temporary fix - you should get the proper PUBLIC_URL from Railway
-    export DATABASE_URL=$(echo $DATABASE_URL | sed 's/railway\.internal/roundhouse.proxy.rlwy.net/')
-    echo "🔧 Updated DATABASE_URL (first 50 chars): ${DATABASE_URL:0:50}..."
+if [ -n "$DATABASE_PUBLIC_URL" ]; then
+    echo "DATABASE_PUBLIC_URL (first 50 chars): ${DATABASE_PUBLIC_URL:0:50}..."
 fi
 
 # Check for required environment variables

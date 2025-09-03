@@ -87,35 +87,22 @@ WSGI_APPLICATION = 'vacationdesktop.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# Check for DATABASE_URL first (production/Railway/Render style)
+# Railway database connection - prioritize public URL
+DATABASE_PUBLIC_URL = config('DATABASE_PUBLIC_URL', default=None)
 DATABASE_URL = config('DATABASE_URL', default=None)
 
-# Railway database connection using public URL
-PGHOST = config('PGHOST', default=None)
-PGPORT = config('PGPORT', default=None)
-PGUSER = config('PGUSER', default=None)
-PGPASSWORD = config('PGPASSWORD', default=None)
-PGDATABASE = config('PGDATABASE', default=None)
-
-if PGHOST and PGUSER and PGPASSWORD and PGDATABASE:
-    # Use Railway's public database connection
+if DATABASE_PUBLIC_URL:
+    # Production: Use Railway's public database URL
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': PGDATABASE,
-            'USER': PGUSER,
-            'PASSWORD': PGPASSWORD,
-            'HOST': PGHOST,
-            'PORT': PGPORT or 5432,
-        }
+        'default': dj_database_url.parse(DATABASE_PUBLIC_URL)
     }
-elif DATABASE_URL and 'railway.internal' not in DATABASE_URL:
-    # Production: Use DATABASE_URL if it doesn't contain railway.internal
+elif DATABASE_URL and 'railway.internal' not in DATABASE_URL and 'RAILWAY_PRIVATE_DOMAIN' not in DATABASE_URL:
+    # Fallback: Use DATABASE_URL if it doesn't contain private domains
     DATABASES = {
         'default': dj_database_url.parse(DATABASE_URL)
     }
 else:
-    # Development or fallback: Use individual PostgreSQL settings
+    # Development or final fallback: Use individual PostgreSQL settings
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
