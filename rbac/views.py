@@ -675,7 +675,12 @@ def ticket_detail_view(request, ticket_id):
                 
                 # Send email notification if it's a client comment and user exists
                 if not is_internal and ticket.created_for and ticket.created_for.email:
-                    send_ticket_notification_email(ticket, comment, 'comment')
+                    try:
+                        send_ticket_notification_email(ticket, comment, 'comment')
+                    except Exception as e:
+                        # Don't let email failures block the comment creation
+                        print(f"Email notification failed: {e}")
+                        pass
                 
                 # Log the comment
                 AuditLog.objects.create(
@@ -741,7 +746,12 @@ def ticket_detail_view(request, ticket_id):
                     
                     # Send email notification to client
                     if ticket.created_for and ticket.created_for.email:
-                        send_ticket_notification_email(ticket, resolution_comment, 'resolved')
+                        try:
+                            send_ticket_notification_email(ticket, resolution_comment, 'resolved')
+                        except Exception as e:
+                            # Don't let email failures block the resolution
+                            print(f"Resolution email notification failed: {e}")
+                            pass
                     
                     # Log the resolution
                     AuditLog.objects.create(
@@ -1041,6 +1051,15 @@ def send_ticket_notification_email(ticket, comment=None, notification_type='comm
     if not ticket.created_for or not ticket.created_for.email:
         return False
     
+    # Set a timeout for email operations to prevent hanging
+    import signal
+    
+    def timeout_handler(signum, frame):
+        raise Exception("Email sending timeout")
+    
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(10)  # 10 second timeout for email sending
+    
     try:
         # Prepare email context
         context = {
@@ -1144,14 +1163,21 @@ def send_ticket_notification_email(ticket, comment=None, notification_type='comm
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[ticket.created_for.email],
             html_message=html_message,
-            fail_silently=False,
+            fail_silently=True,  # Don't raise exceptions for email failures
         )
         
+        # Clear the timeout
+        signal.alarm(0)
         return True
         
     except Exception as e:
+        # Clear the timeout on error
+        signal.alarm(0)
         print(f"Failed to send email notification: {str(e)}")
         return False
+    finally:
+        # Ensure timeout is always cleared
+        signal.alarm(0)
 
 
 def create_emergency_admin(request):
