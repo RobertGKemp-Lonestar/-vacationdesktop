@@ -92,6 +92,10 @@ except Exception as e:
 echo "📁 Collecting static files..."
 python manage.py collectstatic --noinput
 
+# Ensure admin user exists (final check)
+echo "👑 Final admin user check..."
+python ensure_admin.py
+
 # Start Gunicorn server
 echo "🌐 Starting Gunicorn server on port $PORT..."
 exec gunicorn vacationdesktop.wsgi \
