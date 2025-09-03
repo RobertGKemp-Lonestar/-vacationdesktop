@@ -1,9 +1,13 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth import get_user_model
 from .models import (
-    Tenant, Role, Permission, RolePermission, User, UserPermissionOverride, AuditLog,
+    Tenant, Role, Permission, RolePermission, UserPermissionOverride, AuditLog,
     AccountStatus, ClientAccount, SalesOpportunity, SupportTicket, TicketComment, OnboardingTask
 )
+
+# Use get_user_model() instead of direct import
+User = get_user_model()
 
 
 @admin.register(Tenant)

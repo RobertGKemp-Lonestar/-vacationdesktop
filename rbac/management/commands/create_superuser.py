@@ -1,5 +1,9 @@
 from django.core.management.base import BaseCommand
-from rbac.models import User, Role, Tenant
+from django.contrib.auth import get_user_model
+from rbac.models import Role, Tenant
+
+# Use get_user_model() instead of direct import
+User = get_user_model()
 
 
 class Command(BaseCommand):
