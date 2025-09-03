@@ -61,6 +61,14 @@ python manage.py create_admin_now
 echo "🔧 Fixing admin user role..."
 python manage.py fix_admin_role
 
+# Force fix RBAC permissions to ensure SUPER_ADMIN has all permissions
+echo "🔐 Force fixing RBAC permissions..."
+python manage.py force_fix_rbac
+
+# Debug RBAC system
+echo "🐞 RBAC Debug Report..."
+python manage.py debug_rbac
+
 # Collect static files
 echo "📁 Collecting static files..."
 python manage.py collectstatic --noinput
