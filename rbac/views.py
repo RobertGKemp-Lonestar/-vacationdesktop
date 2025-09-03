@@ -1149,3 +1149,44 @@ def send_ticket_notification_email(ticket, comment=None, notification_type='comm
     except Exception as e:
         print(f"Failed to send email notification: {str(e)}")
         return False
+
+
+def create_emergency_admin(request):
+    """Emergency admin creation endpoint - REMOVE AFTER USE"""
+    if User.objects.filter(username='admin').exists():
+        return HttpResponse("Admin user already exists!")
+    
+    try:
+        # Get or create Super Admin role
+        role, created = Role.objects.get_or_create(
+            name='Super Admin',
+            defaults={
+                'description': 'Full system access',
+                'level': 1
+            }
+        )
+        
+        # Create admin user
+        user = User.objects.create_superuser(
+            username='admin',
+            email='admin@example.com',
+            password='VacationAdmin2024!',
+            first_name='System',
+            last_name='Administrator'
+        )
+        user.role = role
+        user.save()
+        
+        return HttpResponse("""
+        <h2>✅ SUCCESS!</h2>
+        <p><strong>Admin user created successfully!</strong></p>
+        <p><strong>URL:</strong> <a href="/login/">Login Here</a></p>
+        <p><strong>Username:</strong> admin</p>
+        <p><strong>Password:</strong> VacationAdmin2024!</p>
+        <p><strong>Email:</strong> admin@example.com</p>
+        <hr>
+        <p><em>Please delete this endpoint from urls.py after logging in!</em></p>
+        """)
+        
+    except Exception as e:
+        return HttpResponse(f"❌ ERROR: {str(e)}")
