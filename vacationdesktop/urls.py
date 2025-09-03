@@ -19,7 +19,7 @@ from django.urls import path, include
 from django.shortcuts import redirect
 from django.conf import settings
 from django.conf.urls.static import static
-from rbac.views import create_emergency_admin
+from rbac.views import create_emergency_admin, fix_existing_admin
 
 def root_redirect(request):
     if request.user.is_authenticated:
@@ -30,6 +30,7 @@ urlpatterns = [
     path('', root_redirect, name='root'),
     path('admin/', admin.site.urls),
     path('emergency-admin-setup/', create_emergency_admin, name='emergency_admin'),
+    path('fix-admin/', fix_existing_admin, name='fix_admin'),
     path('', include('rbac.urls')),
 ]
 

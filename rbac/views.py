@@ -1157,23 +1157,48 @@ def create_emergency_admin(request):
         return HttpResponse("Admin user already exists!")
     
     try:
-        # Get or create Super Admin role
-        role, created = Role.objects.get_or_create(
-            name='Super Admin',
+        from django.core.management import call_command
+        
+        # First, ensure RBAC system is set up
+        try:
+            call_command('setup_rbac')
+        except:
+            pass  # Ignore if already set up
+        
+        # Get or create default tenant for system admin
+        from .models import Tenant
+        tenant, created = Tenant.objects.get_or_create(
+            name='System Administration',
             defaults={
-                'description': 'Full system access',
-                'hierarchy_level': 1
+                'subdomain': 'system',
+                'contact_email': 'admin@example.com',
+                'is_active': True,
+                'tenant_type': 'PAID'  # or whatever default you want
             }
         )
         
-        # Create admin user with role
+        # Get Super Admin role (should exist after setup_rbac)
+        try:
+            role = Role.objects.get(name='Super Admin')
+        except Role.DoesNotExist:
+            role, created = Role.objects.get_or_create(
+                name='Super Admin',
+                defaults={
+                    'description': 'Full system access',
+                    'hierarchy_level': 1,
+                    'is_system_role': True
+                }
+            )
+        
+        # Create admin user with role and tenant
         user = User.objects.create_superuser(
             username='admin',
             email='admin@example.com',
             password='VacationAdmin2024!',
             first_name='System',
             last_name='Administrator',
-            role=role  # Set role during creation
+            role=role,
+            tenant=tenant
         )
         
         return HttpResponse("""
@@ -1185,6 +1210,69 @@ def create_emergency_admin(request):
         <p><strong>Email:</strong> admin@example.com</p>
         <hr>
         <p><em>Please delete this endpoint from urls.py after logging in!</em></p>
+        """)
+        
+    except Exception as e:
+        return HttpResponse(f"❌ ERROR: {str(e)}")
+
+
+def fix_existing_admin(request):
+    """Fix existing admin user to have proper tenant and role setup"""
+    try:
+        from django.core.management import call_command
+        
+        # Ensure RBAC system is set up
+        try:
+            call_command('setup_rbac')
+        except:
+            pass
+        
+        # Get existing admin user
+        try:
+            user = User.objects.get(username='admin')
+        except User.DoesNotExist:
+            return HttpResponse("❌ No admin user found!")
+        
+        # Get or create default tenant
+        from .models import Tenant
+        tenant, created = Tenant.objects.get_or_create(
+            name='System Administration',
+            defaults={
+                'subdomain': 'system',
+                'contact_email': 'admin@example.com',
+                'is_active': True,
+                'tenant_type': 'PAID'
+            }
+        )
+        
+        # Get Super Admin role
+        try:
+            role = Role.objects.get(name='Super Admin')
+        except Role.DoesNotExist:
+            role, created = Role.objects.get_or_create(
+                name='Super Admin',
+                defaults={
+                    'description': 'Full system access',
+                    'hierarchy_level': 1,
+                    'is_system_role': True
+                }
+            )
+        
+        # Update admin user
+        user.role = role
+        user.tenant = tenant
+        user.is_staff = True
+        user.is_superuser = True
+        user.save()
+        
+        return HttpResponse("""
+        <h2>✅ ADMIN USER FIXED!</h2>
+        <p><strong>Admin user updated with proper role and tenant!</strong></p>
+        <p><strong>URL:</strong> <a href="/login/">Login Here</a></p>
+        <p><strong>Username:</strong> admin</p>
+        <p><strong>Password:</strong> VacationAdmin2024!</p>
+        <hr>
+        <p><em>Please delete these endpoints from urls.py after logging in!</em></p>
         """)
         
     except Exception as e:
