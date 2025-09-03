@@ -255,7 +255,7 @@ LOGGING = {
     'handlers': {
         'file': {
             'level': 'INFO',
-            'class': 'logging.StreamHandler',  # Use stream instead of file for Railway
+            'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
         'console': {
