@@ -49,9 +49,44 @@ python manage.py migrate --noinput
 echo "🔐 Setting up RBAC system..."
 python manage.py setup_rbac
 
-# Create admin user (one-time)
-echo "👤 Creating admin user..."
-python reset_admin.py
+# Create admin user using Django's built-in command
+echo "👤 Creating admin user with Django command..."
+python manage.py shell -c "
+from django.contrib.auth import get_user_model
+from rbac.models import Role
+import traceback
+
+try:
+    User = get_user_model()
+    
+    # Delete existing admin if exists
+    User.objects.filter(username='admin').delete()
+    print('Deleted existing admin user')
+    
+    # Get Super Admin role
+    role = Role.objects.get(name='Super Admin')
+    print(f'Found role: {role.name}')
+    
+    # Create admin user
+    user = User.objects.create_superuser(
+        username='admin',
+        email='admin@example.com', 
+        password='VacationAdmin2024!',
+        first_name='System',
+        last_name='Administrator'
+    )
+    user.role = role
+    user.save()
+    
+    print('✅ SUCCESS: Admin user created!')
+    print('Username: admin')
+    print('Password: VacationAdmin2024!')
+    print('Email: admin@example.com')
+    
+except Exception as e:
+    print(f'❌ ERROR: {e}')
+    traceback.print_exc()
+"
 
 # Collect static files
 echo "📁 Collecting static files..."
