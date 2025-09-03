@@ -57,6 +57,10 @@ python manage.py setup_rbac
 echo "👤 Creating admin user NOW..."
 python manage.py create_admin_now
 
+# Fix admin user role to be SUPER_ADMIN
+echo "🔧 Fixing admin user role..."
+python manage.py fix_admin_role
+
 # Collect static files
 echo "📁 Collecting static files..."
 python manage.py collectstatic --noinput

@@ -17,14 +17,13 @@ class Command(BaseCommand):
             User.objects.filter(username=username).delete()
             self.stdout.write("Deleted existing admin user")
             
-            # Get or create Super Admin role
-            role, created = Role.objects.get_or_create(
-                name='Super Admin',
-                defaults={
-                    'description': 'Full system access',
-                    'level': 1
-                }
-            )
+            # Get the SUPER_ADMIN role (created by setup_rbac)
+            try:
+                role = Role.objects.get(name='SUPER_ADMIN')
+                self.stdout.write("Found SUPER_ADMIN role")
+            except Role.DoesNotExist:
+                self.stdout.write("SUPER_ADMIN role not found - run setup_rbac first!")
+                return
             
             # Create admin user
             user = User.objects.create_superuser(
