@@ -17,8 +17,8 @@ User = get_user_model()
 
 # Create superuser if it doesn't exist
 username = 'admin'
-email = 'admin@vacationdesktop.com'
-password = 'admin123'  # Change this to something secure!
+email = 'admin@example.com'
+password = 'VacationAdmin2024!'  # Strong password
 
 if not User.objects.filter(username=username).exists():
     # Get Super Admin role
