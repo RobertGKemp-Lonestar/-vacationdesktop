@@ -25,6 +25,7 @@ from simple_login import emergency_login
 from minimal_test import minimal_test
 from db_test import db_test, model_test
 from production_test import production_debug
+from emergency_login_debug import emergency_login_debug
 
 def root_redirect(request):
     if request.user.is_authenticated:
@@ -43,6 +44,7 @@ urlpatterns = [
     path('db-test/', db_test, name='db_test'),
     path('model-test/', model_test, name='model_test'),
     path('production-debug/', production_debug, name='production_debug'),
+    path('emergency-login-debug/', emergency_login_debug, name='emergency_login_debug'),
     path('', include('rbac.urls')),
 ]
 
