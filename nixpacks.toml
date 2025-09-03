@@ -1,11 +1,7 @@
-[providers]
-python = true
+providers = ["python"]
 
 [phases.build]
 cmds = ['echo "Build phase - skipping migrations"']
 
 [phases.start]
 cmd = './start.sh'
-
-[variables]
-NIXPACKS_NO_DEFAULT_CACHE_DIRECTORIES = "1"
