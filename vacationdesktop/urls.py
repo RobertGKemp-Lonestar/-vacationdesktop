@@ -30,7 +30,7 @@ from admin_debug import admin_debug_view
 
 def root_redirect(request):
     if request.user.is_authenticated:
-        return redirect('simple_dashboard')  # Use working dashboard instead
+        return redirect('dashboard')  # Main RBAC dashboard
     return redirect('login')
 
 urlpatterns = [

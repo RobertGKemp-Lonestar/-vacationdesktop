@@ -184,7 +184,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Authentication settings
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'simple_dashboard'  # Use working dashboard
+LOGIN_REDIRECT_URL = 'dashboard'  # Main RBAC dashboard
 LOGOUT_REDIRECT_URL = 'login'
 
 # Email settings for password reset
