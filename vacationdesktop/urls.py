@@ -24,6 +24,7 @@ from debug_views import debug_admin, simple_dashboard
 from simple_login import emergency_login
 from minimal_test import minimal_test
 from db_test import db_test, model_test
+from production_test import production_debug
 
 def root_redirect(request):
     if request.user.is_authenticated:
@@ -41,6 +42,7 @@ urlpatterns = [
     path('test/', minimal_test, name='minimal_test'),
     path('db-test/', db_test, name='db_test'),
     path('model-test/', model_test, name='model_test'),
+    path('production-debug/', production_debug, name='production_debug'),
     path('', include('rbac.urls')),
 ]
 
