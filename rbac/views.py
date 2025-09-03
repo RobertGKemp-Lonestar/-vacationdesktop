@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Count, Q
 from django.core.paginator import Paginator
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -1162,7 +1162,7 @@ def create_emergency_admin(request):
             name='Super Admin',
             defaults={
                 'description': 'Full system access',
-                'level': 1
+                'hierarchy_level': 1
             }
         )
         
