@@ -15,9 +15,9 @@ keepalive = 2
 max_requests = 1000
 max_requests_jitter = 50
 
-# Logging
-accesslog = "logs/gunicorn_access.log"
-errorlog = "logs/gunicorn_error.log"
+# Logging - Use stdout/stderr for Railway deployment
+accesslog = "-"  # stdout
+errorlog = "-"   # stderr
 loglevel = "info"
 
 # Process naming
@@ -25,7 +25,7 @@ proc_name = "vacationdesktop"
 
 # Daemon mode
 daemon = False
-pidfile = "logs/gunicorn.pid"
+# pidfile = "logs/gunicorn.pid"  # Disabled for Railway - no persistent storage
 
 # User and group to run as (for production)
 # user = "www-data"
