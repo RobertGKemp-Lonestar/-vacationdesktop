@@ -1,6 +1,10 @@
 from django import forms
+from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import PasswordChangeForm, PasswordResetForm, SetPasswordForm
-from .models import User, Role
+from .models import Role
+
+# Use get_user_model() instead of direct import
+User = get_user_model()
 
 
 class UserProfileForm(forms.ModelForm):

@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Count, Q
@@ -9,8 +9,11 @@ from django.utils import timezone
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
-from .models import User, Role, Permission, Tenant, AuditLog, SupportTicket, TicketComment
+from .models import Role, Permission, Tenant, AuditLog, SupportTicket, TicketComment
 from .forms import AddUserForm, EditUserForm, ChangeUserPasswordForm
+
+# Use get_user_model() instead of direct import
+User = get_user_model()
 
 
 def login_view(request):
