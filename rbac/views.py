@@ -1166,16 +1166,15 @@ def create_emergency_admin(request):
             }
         )
         
-        # Create admin user
+        # Create admin user with role
         user = User.objects.create_superuser(
             username='admin',
             email='admin@example.com',
             password='VacationAdmin2024!',
             first_name='System',
-            last_name='Administrator'
+            last_name='Administrator',
+            role=role  # Set role during creation
         )
-        user.role = role
-        user.save()
         
         return HttpResponse("""
         <h2>✅ SUCCESS!</h2>
