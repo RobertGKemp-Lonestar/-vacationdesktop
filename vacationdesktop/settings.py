@@ -90,13 +90,32 @@ WSGI_APPLICATION = 'vacationdesktop.wsgi.application'
 # Check for DATABASE_URL first (production/Railway/Render style)
 DATABASE_URL = config('DATABASE_URL', default=None)
 
-if DATABASE_URL:
-    # Production: Use DATABASE_URL
+# Railway database connection using public URL
+PGHOST = config('PGHOST', default=None)
+PGPORT = config('PGPORT', default=None)
+PGUSER = config('PGUSER', default=None)
+PGPASSWORD = config('PGPASSWORD', default=None)
+PGDATABASE = config('PGDATABASE', default=None)
+
+if PGHOST and PGUSER and PGPASSWORD and PGDATABASE:
+    # Use Railway's public database connection
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': PGDATABASE,
+            'USER': PGUSER,
+            'PASSWORD': PGPASSWORD,
+            'HOST': PGHOST,
+            'PORT': PGPORT or 5432,
+        }
+    }
+elif DATABASE_URL and 'railway.internal' not in DATABASE_URL:
+    # Production: Use DATABASE_URL if it doesn't contain railway.internal
     DATABASES = {
         'default': dj_database_url.parse(DATABASE_URL)
     }
 else:
-    # Development or build phase: Use individual PostgreSQL settings
+    # Development or fallback: Use individual PostgreSQL settings
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
