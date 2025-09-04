@@ -187,24 +187,25 @@ LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard'  # Main RBAC dashboard
 LOGOUT_REDIRECT_URL = 'login'
 
-# Email settings for password reset
-# Always use SMTP (comment out to revert to console in development)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-
-# if DEBUG:
-#     # Development: Print emails to console
-#     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-# else:
-#     # Production: Use SMTP
-#     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-
-EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+# Email settings for password reset and notifications
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
-EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=False, cast=bool)
-EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='forms@kemp-it.com')
+
+# Use SMTP if credentials are provided, otherwise fall back to console
+if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
+    # Production: Use SMTP when credentials are configured
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+    EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+    EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+    EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
+    DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@vacationdesktop.com')
+    print("📧 Email backend: SMTP configured")
+else:
+    # Development/No credentials: Print emails to console for debugging
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@vacationdesktop.com')
+    print("📧 Email backend: Console (SMTP credentials not configured)")
 
 # Redis Configuration (Production-like caching and sessions) 
 REDIS_URL = config('REDIS_URL', default='')
