@@ -212,17 +212,23 @@ if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD and not FORCE_CONSOLE_EMAIL:
     print(f"📧 DEBUG: Configured EMAIL_PORT: {EMAIL_PORT}")
     print(f"📧 DEBUG: Configured EMAIL_USE_TLS: {EMAIL_USE_TLS}")
     
-    # Special handling for Mailgun which uses different ports/protocols
+    # Special handling for Mailgun - always use optimal settings
     if 'mailgun' in EMAIL_HOST.lower():
-        # Mailgun typically uses port 587 with TLS, not SSL  
-        port_from_config = config('EMAIL_PORT', default=None)
-        if str(port_from_config) == '465':
-            EMAIL_PORT = 587
-            EMAIL_USE_TLS = True
-            EMAIL_USE_SSL = False
-            print("📧 Mailgun detected: Adjusted to port 587 with TLS")
-        else:
-            print(f"📧 Mailgun detected: Using configured port {EMAIL_PORT}")
+        # Mailgun works best with port 587 and TLS, not SSL
+        original_port = EMAIL_PORT
+        original_tls = EMAIL_USE_TLS
+        original_ssl = EMAIL_USE_SSL
+        
+        EMAIL_PORT = 587
+        EMAIL_USE_TLS = True
+        EMAIL_USE_SSL = False
+        
+        print(f"📧 Mailgun detected: Optimized settings")
+        print(f"📧   Changed port from {original_port} to {EMAIL_PORT}")
+        print(f"📧   Changed TLS from {original_tls} to {EMAIL_USE_TLS}")
+        print(f"📧   Changed SSL from {original_ssl} to {EMAIL_USE_SSL}")
+    else:
+        print(f"📧 Non-Mailgun SMTP: Using port {EMAIL_PORT}")
     
     DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@vacationdesktop.com')
     print("📧 Email backend: SMTP configured")
