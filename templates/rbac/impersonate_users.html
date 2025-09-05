@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+
+{% block title %}Impersonate User - {{ tenant.name }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="fas fa-user-secret"></i> Impersonate User</h2>
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-building"></i> {{ tenant.name }} 
+                        <span class="badge bg-info ms-2">{{ tenant.get_tenant_type_display }}</span>
+                    </p>
+                </div>
+                <a href="{% url 'staff_client_management' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Clients
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Warning Banner -->
+    <div class="alert alert-warning" role="alert">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+            <div>
+                <h5 class="alert-heading mb-1">Support Impersonation</h5>
+                <p class="mb-0">
+                    You are about to impersonate another user for support purposes. 
+                    All actions will be logged and attributed to the impersonated user.
+                    <strong>Use this feature responsibly.</strong>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Tenant Users -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users"></i> {{ tenant.name }} Users
+                        <span class="badge bg-primary ms-2">{{ users.count }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if users %}
+                        <div class="list-group list-group-flush">
+                            {% for user in users %}
+                            <div class="list-group-item d-flex justify-content-between align-items-start">
+                                <div class="me-auto">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <div class="avatar-circle me-2 bg-primary text-white">
+                                            {{ user.username|slice:":1"|upper }}
+                                        </div>
+                                        <div>
+                                            <strong>{{ user.get_full_name|default:user.username }}</strong>
+                                            <small class="text-muted">@{{ user.username }}</small>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span class="badge 
+                                            {% if user.role.name == 'CLIENT_ADMIN' %}bg-success
+                                            {% elif user.role.name == 'CLIENT_USER' %}bg-info
+                                            {% else %}bg-secondary{% endif %} me-2">
+                                            {{ user.role.get_name_display }}
+                                        </span>
+                                        {% if not user.is_active %}
+                                            <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </div>
+                                    <small class="text-muted">
+                                        <i class="fas fa-envelope"></i> {{ user.email }}
+                                        {% if user.last_login %}
+                                            • Last login: {{ user.last_login|date:"M j, Y g:i A" }}
+                                        {% else %}
+                                            • Never logged in
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <div>
+                                    {% if user == current_user %}
+                                        <button class="btn btn-sm btn-outline-secondary" disabled>
+                                            <i class="fas fa-user"></i> You
+                                        </button>
+                                    {% elif user.is_active %}
+                                        <a href="{% url 'start_impersonation' user.id %}" 
+                                           class="btn btn-sm btn-outline-primary"
+                                           target="_blank"
+                                           onclick="return confirm('Start impersonating {{ user.get_full_name|default:user.username }} in a new tab?')">
+                                            <i class="fas fa-sign-in-alt"></i> Impersonate <i class="fas fa-external-link-alt ms-1"></i>
+                                        </a>
+                                    {% else %}
+                                        <button class="btn btn-sm btn-outline-secondary" disabled title="User is inactive">
+                                            <i class="fas fa-ban"></i> Inactive
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No users found in this tenant.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- System Users (only for SUPER_ADMIN and SYSTEM_ADMIN) -->
+        {% if system_users %}
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cog"></i> System Users
+                        <span class="badge bg-secondary ms-2">{{ system_users.count }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for user in system_users %}
+                        <div class="list-group-item d-flex justify-content-between align-items-start">
+                            <div class="me-auto">
+                                <div class="d-flex align-items-center mb-1">
+                                    <div class="avatar-circle me-2 bg-dark text-white">
+                                        {{ user.username|slice:":1"|upper }}
+                                    </div>
+                                    <div>
+                                        <strong>{{ user.get_full_name|default:user.username }}</strong>
+                                        <small class="text-muted">@{{ user.username }}</small>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="badge 
+                                        {% if user.role.name == 'SUPER_ADMIN' %}bg-danger
+                                        {% elif user.role.name == 'SYSTEM_ADMIN' %}bg-warning text-dark
+                                        {% elif user.role.name == 'HELPDESK_USER' %}bg-info
+                                        {% else %}bg-secondary{% endif %} me-2">
+                                        {{ user.role.get_name_display }}
+                                    </span>
+                                    {% if not user.is_active %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">
+                                    <i class="fas fa-envelope"></i> {{ user.email }}
+                                    {% if user.last_login %}
+                                        • Last login: {{ user.last_login|date:"M j, Y g:i A" }}
+                                    {% else %}
+                                        • Never logged in
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <div>
+                                {% if user == current_user %}
+                                    <button class="btn btn-sm btn-outline-secondary" disabled>
+                                        <i class="fas fa-user"></i> You
+                                    </button>
+                                {% elif user.is_active %}
+                                    <a href="{% url 'start_impersonation' user.id %}" 
+                                       class="btn btn-sm btn-outline-danger"
+                                       target="_blank"
+                                       onclick="return confirm('Start impersonating {{ user.get_full_name|default:user.username }} in a new tab? This will give you their system-wide privileges.')">
+                                        <i class="fas fa-sign-in-alt"></i> Impersonate <i class="fas fa-external-link-alt ms-1"></i>
+                                    </a>
+                                {% else %}
+                                    <button class="btn btn-sm btn-outline-secondary" disabled title="User is inactive">
+                                        <i class="fas fa-ban"></i> Inactive
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+</style>
+{% endblock %}

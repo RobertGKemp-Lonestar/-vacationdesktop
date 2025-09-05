@@ -15,6 +15,15 @@ from .forms import AddUserForm, EditUserForm, ChangeUserPasswordForm
 # Use get_user_model() instead of direct import
 User = get_user_model()
 
+# Import impersonation views
+from .impersonation import (
+    impersonate_tenant_users, 
+    start_impersonation, 
+    stop_impersonation,
+    is_impersonating,
+    get_impersonation_info
+)
+
 
 def login_view(request):
     """Custom login view with RBAC support"""

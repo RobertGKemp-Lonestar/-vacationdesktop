@@ -31,4 +31,9 @@ urlpatterns = [
     
     # AJAX endpoints
     path('ajax/get-tenant-users/', views.get_tenant_users_ajax, name='get_tenant_users_ajax'),
+    
+    # Impersonation URLs
+    path('impersonate/tenant/<uuid:tenant_id>/users/', views.impersonate_tenant_users, name='impersonate_tenant_users'),
+    path('impersonate/start/<uuid:user_id>/', views.start_impersonation, name='start_impersonation'),
+    path('impersonate/stop/', views.stop_impersonation, name='stop_impersonation'),
 ]

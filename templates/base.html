@@ -146,6 +146,9 @@
     </nav>
     {% endif %}
     
+    <!-- Impersonation Banner ---->
+    {% include 'rbac/impersonation_banner.html' %}
+    
     <!-- Main Content -->
     <main class="{% if user.is_authenticated %}container-fluid mt-4{% else %}{% endif %}">
         <!-- Messages -->

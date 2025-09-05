@@ -1,0 +1,92 @@
+{% if request.GET.imp_token %}
+<div class="alert alert-warning border-0 rounded-0 mb-0" style="background: linear-gradient(135deg, #ff9500, #ff6b00); color: white;" role="alert">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <i class="fas fa-user-secret fa-lg"></i>
+            </div>
+            <div class="col">
+                <strong>IMPERSONATION MODE</strong> - 
+                You are viewing the system as <strong>{{ user.get_full_name|default:user.username }}</strong>
+                {% if user.tenant %}({{ user.tenant.name }}){% else %}(System User){% endif %}
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'stop_impersonation' %}?imp_token={{ request.GET.imp_token }}" 
+                   class="btn btn-sm btn-light me-2"
+                   onclick="return confirm('Stop impersonating and return to your account?')">
+                    <i class="fas fa-sign-out-alt"></i> Stop Impersonation
+                </a>
+                <button onclick="window.close()" 
+                        class="btn btn-sm btn-outline-light"
+                        title="Close this impersonation tab">
+                    <i class="fas fa-times"></i> Close Tab
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-append impersonation token to all internal links
+document.addEventListener('DOMContentLoaded', function() {
+    const impToken = '{{ request.GET.imp_token }}';
+    if (!impToken) return;
+    
+    // Function to add token to URL
+    function addTokenToUrl(url) {
+        if (!url || url.startsWith('http') || url.startsWith('mailto:') || url.startsWith('tel:')) {
+            return url; // Don't modify external links
+        }
+        
+        const separator = url.includes('?') ? '&' : '?';
+        return url + separator + 'imp_token=' + encodeURIComponent(impToken);
+    }
+    
+    // Add token to all internal links
+    function updateLinks() {
+        const links = document.querySelectorAll('a[href]');
+        links.forEach(function(link) {
+            const href = link.getAttribute('href');
+            if (href && !href.includes('imp_token=') && !href.startsWith('#')) {
+                link.href = addTokenToUrl(href);
+            }
+        });
+        
+        // Add token to forms
+        const forms = document.querySelectorAll('form');
+        forms.forEach(function(form) {
+            // Only add to forms that don't already have the token
+            const existingToken = form.querySelector('input[name="imp_token"]');
+            if (!existingToken) {
+                const tokenInput = document.createElement('input');
+                tokenInput.type = 'hidden';
+                tokenInput.name = 'imp_token';
+                tokenInput.value = impToken;
+                form.appendChild(tokenInput);
+            }
+        });
+    }
+    
+    // Initial update
+    updateLinks();
+    
+    // Update links when new content is loaded (for dynamic content)
+    const observer = new MutationObserver(function(mutations) {
+        let shouldUpdate = false;
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                shouldUpdate = true;
+            }
+        });
+        if (shouldUpdate) {
+            setTimeout(updateLinks, 100);
+        }
+    });
+    
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+});
+</script>
+{% endif %}
