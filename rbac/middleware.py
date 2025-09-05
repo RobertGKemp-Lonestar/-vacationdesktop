@@ -26,14 +26,14 @@ class ImpersonationTokenMiddleware:
         return response
     
     def handle_impersonation_token(self, request, token):
-        """Handle impersonation token"""
-        token_data = ImpersonationTokenManager.get_token_data(token)
-        
-        if not token_data:
-            messages.error(request, "Invalid or expired impersonation token.")
-            return
-        
+        """Handle impersonation token with robust error handling"""
         try:
+            token_data = ImpersonationTokenManager.get_token_data(token)
+            
+            if not token_data:
+                # Don't show error message as token might be expired - just silently ignore
+                return
+            
             # Get the target user to impersonate
             target_user = User.objects.get(id=token_data['target_user_id'])
             original_user = User.objects.get(id=token_data['original_user_id'])
@@ -53,8 +53,14 @@ class ImpersonationTokenMiddleware:
             request.user = target_user
             
         except User.DoesNotExist:
-            messages.error(request, "Impersonation user not found.")
+            # User not found - token is invalid, silently ignore
             return
-        except KeyError as e:
-            messages.error(request, f"Invalid token data: {e}")
+        except (KeyError, TypeError, ValueError) as e:
+            # Invalid token data - silently ignore to prevent 500 errors
+            return
+        except Exception as e:
+            # Any other error - log it but don't break the request
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Impersonation middleware error: {e}")
             return
