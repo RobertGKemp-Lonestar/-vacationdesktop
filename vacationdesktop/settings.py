@@ -191,8 +191,11 @@ LOGOUT_REDIRECT_URL = 'login'
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 
-# Use SMTP if credentials are provided, otherwise fall back to console
-if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
+# TEMPORARY: Force console backend to prevent worker timeouts until SMTP is fixed
+FORCE_CONSOLE_EMAIL = config('FORCE_CONSOLE_EMAIL', default='true', cast=bool)
+
+# Use SMTP if credentials are provided AND force console is disabled
+if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD and not FORCE_CONSOLE_EMAIL:
     # Production: Use SMTP when credentials are configured
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
     EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
@@ -211,10 +214,13 @@ if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
     DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@vacationdesktop.com')
     print("📧 Email backend: SMTP configured")
 else:
-    # Development/No credentials: Print emails to console for debugging
+    # Development/No credentials/Force console: Print emails to console for debugging
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@vacationdesktop.com')
-    print("📧 Email backend: Console (SMTP credentials not configured)")
+    if FORCE_CONSOLE_EMAIL:
+        print("📧 Email backend: Console (FORCE_CONSOLE_EMAIL=true - preventing timeouts)")
+    else:
+        print("📧 Email backend: Console (SMTP credentials not configured)")
 
 # Redis Configuration (Production-like caching and sessions) 
 REDIS_URL = config('REDIS_URL', default='')

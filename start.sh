@@ -77,12 +77,13 @@ python manage.py collectstatic --noinput
 echo "🌐 Starting Gunicorn server on port $PORT..."
 exec gunicorn vacationdesktop.wsgi \
     --bind 0.0.0.0:$PORT \
-    --workers 3 \
+    --workers 2 \
     --worker-class sync \
-    --timeout 120 \
-    --keep-alive 5 \
-    --max-requests 1000 \
-    --max-requests-jitter 100 \
-    --preload \
+    --timeout 300 \
+    --graceful-timeout 60 \
+    --keep-alive 2 \
+    --max-requests 500 \
+    --max-requests-jitter 50 \
+    --worker-connections 1000 \
     --access-logfile - \
     --error-logfile -
