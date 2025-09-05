@@ -199,39 +199,57 @@ print(f"📧 DEBUG: EMAIL_HOST_USER from env: '{EMAIL_HOST_USER}'")
 print(f"📧 DEBUG: EMAIL_HOST_PASSWORD exists: {bool(EMAIL_HOST_PASSWORD)}")
 print(f"📧 DEBUG: FORCE_CONSOLE_EMAIL: {FORCE_CONSOLE_EMAIL}")
 
-# Use SMTP if credentials are provided AND force console is disabled
+# Check if we should use Mailgun API instead of SMTP
+USE_MAILGUN_API = config('USE_MAILGUN_API', default='false', cast=bool)
+MAILGUN_API_KEY = config('MAILGUN_API_KEY', default='')
+
+# Use SMTP or API if credentials are provided AND force console is disabled
 if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD and not FORCE_CONSOLE_EMAIL:
-    # Production: Use SMTP when credentials are configured
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
-    EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
-    EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
-    EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
     
-    print(f"📧 DEBUG: Configured EMAIL_HOST: {EMAIL_HOST}")
-    print(f"📧 DEBUG: Configured EMAIL_PORT: {EMAIL_PORT}")
-    print(f"📧 DEBUG: Configured EMAIL_USE_TLS: {EMAIL_USE_TLS}")
-    
-    # Special handling for Mailgun - always use optimal settings
-    if 'mailgun' in EMAIL_HOST.lower():
-        # Mailgun works best with port 587 and TLS, not SSL
-        original_port = EMAIL_PORT
-        original_tls = EMAIL_USE_TLS
-        original_ssl = EMAIL_USE_SSL
-        
-        EMAIL_PORT = 587
-        EMAIL_USE_TLS = True
-        EMAIL_USE_SSL = False
-        
-        print(f"📧 Mailgun detected: Optimized settings")
-        print(f"📧   Changed port from {original_port} to {EMAIL_PORT}")
-        print(f"📧   Changed TLS from {original_tls} to {EMAIL_USE_TLS}")
-        print(f"📧   Changed SSL from {original_ssl} to {EMAIL_USE_SSL}")
+    # Check if we should use Mailgun API (more reliable on cloud platforms)
+    if USE_MAILGUN_API and MAILGUN_API_KEY and 'mailgun' in config('EMAIL_HOST', default='').lower():
+        EMAIL_BACKEND = 'mailgun_api_backend.MailgunAPIBackend'
+        MAILGUN_DOMAIN = config('MAILGUN_DOMAIN', default='')
+        # Extract domain from email user if not explicitly set
+        if not MAILGUN_DOMAIN and '@' in EMAIL_HOST_USER:
+            MAILGUN_DOMAIN = EMAIL_HOST_USER.split('@')[1]
+        print("📧 Email backend: Mailgun API (HTTP)")
+        print(f"📧 Mailgun domain: {MAILGUN_DOMAIN}")
     else:
-        print(f"📧 Non-Mailgun SMTP: Using port {EMAIL_PORT}")
+        # Production: Use SMTP when credentials are configured
+        EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+        EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+        EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+        EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+        EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
+    
+    # Only configure SMTP settings if we're using SMTP backend
+    if EMAIL_BACKEND == 'django.core.mail.backends.smtp.EmailBackend':
+        print(f"📧 DEBUG: Configured EMAIL_HOST: {EMAIL_HOST}")
+        print(f"📧 DEBUG: Configured EMAIL_PORT: {EMAIL_PORT}")
+        print(f"📧 DEBUG: Configured EMAIL_USE_TLS: {EMAIL_USE_TLS}")
+        
+        # Special handling for Mailgun - always use optimal settings
+        if 'mailgun' in EMAIL_HOST.lower():
+            # Mailgun works best with port 587 and TLS, not SSL
+            original_port = EMAIL_PORT
+            original_tls = EMAIL_USE_TLS
+            original_ssl = EMAIL_USE_SSL
+            
+            EMAIL_PORT = 587
+            EMAIL_USE_TLS = True
+            EMAIL_USE_SSL = False
+            
+            print(f"📧 Mailgun detected: Optimized settings")
+            print(f"📧   Changed port from {original_port} to {EMAIL_PORT}")
+            print(f"📧   Changed TLS from {original_tls} to {EMAIL_USE_TLS}")
+            print(f"📧   Changed SSL from {original_ssl} to {EMAIL_USE_SSL}")
+        else:
+            print(f"📧 Non-Mailgun SMTP: Using port {EMAIL_PORT}")
+        
+        print("📧 Email backend: SMTP configured")
     
     DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@vacationdesktop.com')
-    print("📧 Email backend: SMTP configured")
 else:
     # Development/No credentials/Force console: Print emails to console for debugging
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
