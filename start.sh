@@ -61,6 +61,10 @@ python manage.py create_admin_now
 echo "🔧 Fixing admin user role..."
 python manage.py fix_admin_role
 
+# Fix admin user tenant assignment
+echo "🏢 Fixing admin user tenant assignment..."
+python manage.py fix_admin_tenant
+
 # Force fix RBAC permissions to ensure SUPER_ADMIN has all permissions
 echo "🔐 Force fixing RBAC permissions..."
 python manage.py force_fix_rbac

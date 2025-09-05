@@ -25,7 +25,7 @@ class Command(BaseCommand):
                 self.stdout.write("SUPER_ADMIN role not found - run setup_rbac first!")
                 return
             
-            # Create admin user
+            # Create admin user with no tenant (system-wide access)
             user = User.objects.create_superuser(
                 username=username,
                 email=email,
@@ -34,6 +34,7 @@ class Command(BaseCommand):
                 last_name='Administrator'
             )
             user.role = role
+            user.tenant = None  # System users don't belong to a specific tenant
             user.save()
             
             self.stdout.write(
