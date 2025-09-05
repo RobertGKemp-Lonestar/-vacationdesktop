@@ -199,6 +199,15 @@ if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
     EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
     EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
     EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
+    
+    # Special handling for Mailgun which uses different ports/protocols
+    if 'mailgun' in EMAIL_HOST.lower():
+        # Mailgun typically uses port 587 with TLS, not SSL
+        if config('EMAIL_PORT', default=None) == '465':
+            EMAIL_PORT = 587
+            EMAIL_USE_TLS = True
+            EMAIL_USE_SSL = False
+            print("📧 Mailgun detected: Adjusted to port 587 with TLS")
     DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@vacationdesktop.com')
     print("📧 Email backend: SMTP configured")
 else:
