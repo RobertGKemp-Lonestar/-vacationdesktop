@@ -194,6 +194,11 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 # TEMPORARY: Force console backend to prevent worker timeouts until SMTP is fixed
 FORCE_CONSOLE_EMAIL = config('FORCE_CONSOLE_EMAIL', default='true', cast=bool)
 
+# Debug environment variable loading
+print(f"📧 DEBUG: EMAIL_HOST_USER from env: '{EMAIL_HOST_USER}'")
+print(f"📧 DEBUG: EMAIL_HOST_PASSWORD exists: {bool(EMAIL_HOST_PASSWORD)}")
+print(f"📧 DEBUG: FORCE_CONSOLE_EMAIL: {FORCE_CONSOLE_EMAIL}")
+
 # Use SMTP if credentials are provided AND force console is disabled
 if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD and not FORCE_CONSOLE_EMAIL:
     # Production: Use SMTP when credentials are configured
@@ -203,14 +208,22 @@ if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD and not FORCE_CONSOLE_EMAIL:
     EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
     EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
     
+    print(f"📧 DEBUG: Configured EMAIL_HOST: {EMAIL_HOST}")
+    print(f"📧 DEBUG: Configured EMAIL_PORT: {EMAIL_PORT}")
+    print(f"📧 DEBUG: Configured EMAIL_USE_TLS: {EMAIL_USE_TLS}")
+    
     # Special handling for Mailgun which uses different ports/protocols
     if 'mailgun' in EMAIL_HOST.lower():
-        # Mailgun typically uses port 587 with TLS, not SSL
-        if config('EMAIL_PORT', default=None) == '465':
+        # Mailgun typically uses port 587 with TLS, not SSL  
+        port_from_config = config('EMAIL_PORT', default=None)
+        if str(port_from_config) == '465':
             EMAIL_PORT = 587
             EMAIL_USE_TLS = True
             EMAIL_USE_SSL = False
             print("📧 Mailgun detected: Adjusted to port 587 with TLS")
+        else:
+            print(f"📧 Mailgun detected: Using configured port {EMAIL_PORT}")
+    
     DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@vacationdesktop.com')
     print("📧 Email backend: SMTP configured")
 else:

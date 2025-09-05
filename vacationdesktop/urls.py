@@ -28,6 +28,7 @@ from production_test import production_debug
 from emergency_login_debug import emergency_login_debug
 from admin_debug import admin_debug_view
 from email_debug import email_debug_view
+from env_debug import env_debug_view
 
 def root_redirect(request):
     if request.user.is_authenticated:
@@ -49,6 +50,7 @@ urlpatterns = [
     path('emergency-login-debug/', emergency_login_debug, name='emergency_login_debug'),
     path('admin-debug/', admin_debug_view, name='admin_debug_view'),
     path('email-debug/', email_debug_view, name='email_debug_view'),
+    path('env-debug/', env_debug_view, name='env_debug_view'),
     path('', include('rbac.urls')),
 ]
 
