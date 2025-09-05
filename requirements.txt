@@ -25,6 +25,7 @@ django-extensions==3.2.3    # Development tools
 # Environment & Configuration
 python-dotenv==1.0.0  # Environment variables
 dj-database-url==2.1.0  # Database URL parsing for production
+requests==2.31.0  # HTTP requests for Mailgun API backend
 
 # Production Utilities
 django-cors-headers==4.3.0  # CORS handling
