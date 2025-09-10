@@ -1,0 +1,375 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Ticket {{ ticket.ticket_number }} - VacationDesktop{% endblock %}
+
+{% block content %}
+<div class="container-fluid fade-in">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'client_my_tickets' %}">My Tickets</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ ticket.ticket_number }}</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>
+                    <i class="fas fa-ticket-alt me-2"></i>
+                    {{ ticket.ticket_number }}
+                    {% if ticket.priority == 'URGENT' %}
+                        <span class="badge bg-danger ms-2">{{ ticket.get_priority_display }}</span>
+                    {% elif ticket.priority == 'HIGH' %}
+                        <span class="badge bg-warning text-dark ms-2">{{ ticket.get_priority_display }}</span>
+                    {% elif ticket.priority == 'MEDIUM' %}
+                        <span class="badge bg-info ms-2">{{ ticket.get_priority_display }}</span>
+                    {% else %}
+                        <span class="badge bg-secondary ms-2">{{ ticket.get_priority_display }}</span>
+                    {% endif %}
+                </h1>
+                <div>
+                    <a href="{% url 'client_my_tickets' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to My Tickets
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Main ticket content -->
+        <div class="col-md-8">
+            <!-- Ticket details card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="mb-0">{{ ticket.subject }}</h5>
+                        </div>
+                        <div class="col-auto">
+                            {% if ticket.status == 'NEW' %}
+                                <span class="badge bg-primary">{{ ticket.get_status_display }}</span>
+                            {% elif ticket.status == 'OPEN' %}
+                                <span class="badge bg-warning text-dark">{{ ticket.get_status_display }}</span>
+                            {% elif ticket.status == 'IN_PROGRESS' %}
+                                <span class="badge bg-info">{{ ticket.get_status_display }}</span>
+                            {% elif ticket.status == 'PENDING' %}
+                                <span class="badge bg-warning">{{ ticket.get_status_display }}</span>
+                            {% elif ticket.status == 'RESOLVED' %}
+                                <span class="badge bg-success">{{ ticket.get_status_display }}</span>
+                            {% elif ticket.status == 'CLOSED' %}
+                                <span class="badge bg-secondary">{{ ticket.get_status_display }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6>Description</h6>
+                        <div class="p-3 bg-light rounded">
+                            {{ ticket.description|linebreaksbr }}
+                        </div>
+                    </div>
+                    
+                    {% if ticket.status == 'RESOLVED' and ticket.resolution %}
+                    <div class="mb-3">
+                        <h6 class="text-success"><i class="fas fa-check-circle me-2"></i>Resolution</h6>
+                        <div class="p-3 bg-success-light rounded border-start border-success border-4">
+                            {{ ticket.resolution|linebreaksbr }}
+                            {% if ticket.resolved_at %}
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    Resolved on {{ ticket.resolved_at|date:"M j, Y \a\t g:i A" }}
+                                </small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Comments/conversation -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-comments me-2"></i>
+                        Conversation ({{ comments.count }} message{{ comments.count|pluralize }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if comments %}
+                        <div class="timeline">
+                            {% for comment in comments %}
+                            <div class="timeline-item {% if comment.author == user %}timeline-item-right{% endif %}">
+                                <div class="timeline-marker">
+                                    {% if comment.author == user %}
+                                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                            <i class="fas fa-user fa-sm text-white"></i>
+                                        </div>
+                                    {% else %}
+                                        <div class="bg-success rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                            <i class="fas fa-headset fa-sm text-white"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="timeline-content">
+                                    <div class="card {% if comment.author == user %}border-primary{% else %}border-success{% endif %}">
+                                        <div class="card-header py-2 {% if comment.author == user %}bg-primary text-white{% else %}bg-success text-white{% endif %}">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <strong>
+                                                    {% if comment.author == user %}
+                                                        You
+                                                    {% else %}
+                                                        {{ comment.author.get_full_name|default:"Support Agent" }}
+                                                    {% endif %}
+                                                </strong>
+                                                {% if comment.author == user %}
+                                                    <small style="color: #ffffff !important; opacity: 0.9 !important;">{{ comment.created_at|date:"M j, Y \a\t g:i A" }}</small>
+                                                {% else %}
+                                                    <small style="color: #ffffff !important; opacity: 0.8 !important;">{{ comment.created_at|date:"M j, Y \a\t g:i A" }}</small>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="card-body py-2">
+                                            {{ comment.comment|linebreaksbr }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-comment-dots fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">No messages yet. Our support team will respond to your ticket soon.</p>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Add comment form -->
+                    {% if can_comment %}
+                    <div class="mt-4 pt-3 border-top">
+                        <h6><i class="fas fa-reply me-2"></i>Add a Message</h6>
+                        <form method="post">
+                            {% csrf_token %}
+                            {% if request.GET.imp_token %}
+                                <input type="hidden" name="imp_token" value="{{ request.GET.imp_token }}">
+                            {% endif %}
+                            <input type="hidden" name="action" value="add_comment">
+                            <div class="mb-3">
+                                <textarea class="form-control" name="comment" rows="4" 
+                                          placeholder="Type your message here..." required></textarea>
+                            </div>
+                            <div class="d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane me-2"></i>Send Message
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    {% else %}
+                        {% if ticket.status == 'CLOSED' %}
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-lock me-2"></i>
+                            This ticket is closed. You cannot add new messages.
+                        </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar with ticket info -->
+        <div class="col-md-4">
+            <!-- Ticket information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Ticket Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-5"><strong>Number:</strong></div>
+                        <div class="col-7">{{ ticket.ticket_number }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5"><strong>Status:</strong></div>
+                        <div class="col-7">
+                            {% if ticket.status == 'NEW' %}
+                                <span class="badge bg-primary">{{ ticket.get_status_display }}</span>
+                            {% elif ticket.status == 'OPEN' %}
+                                <span class="badge bg-warning text-dark">{{ ticket.get_status_display }}</span>
+                            {% elif ticket.status == 'IN_PROGRESS' %}
+                                <span class="badge bg-info">{{ ticket.get_status_display }}</span>
+                            {% elif ticket.status == 'PENDING' %}
+                                <span class="badge bg-warning">{{ ticket.get_status_display }}</span>
+                            {% elif ticket.status == 'RESOLVED' %}
+                                <span class="badge bg-success">{{ ticket.get_status_display }}</span>
+                            {% elif ticket.status == 'CLOSED' %}
+                                <span class="badge bg-secondary">{{ ticket.get_status_display }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5"><strong>Priority:</strong></div>
+                        <div class="col-7">
+                            {% if ticket.priority == 'URGENT' %}
+                                <span class="badge bg-danger">{{ ticket.get_priority_display }}</span>
+                            {% elif ticket.priority == 'HIGH' %}
+                                <span class="badge bg-warning text-dark">{{ ticket.get_priority_display }}</span>
+                            {% elif ticket.priority == 'MEDIUM' %}
+                                <span class="badge bg-info">{{ ticket.get_priority_display }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ ticket.get_priority_display }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5"><strong>Category:</strong></div>
+                        <div class="col-7">{{ ticket.get_category_display }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5"><strong>Created:</strong></div>
+                        <div class="col-7">{{ ticket.created_at|date:"M j, Y \a\t g:i A" }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5"><strong>Last Update:</strong></div>
+                        <div class="col-7">{{ ticket.updated_at|date:"M j, Y \a\t g:i A" }}</div>
+                    </div>
+                    {% if ticket.assigned_to %}
+                    <div class="row mb-2">
+                        <div class="col-5"><strong>Assigned to:</strong></div>
+                        <div class="col-7">{{ ticket.assigned_to.get_full_name|default:ticket.assigned_to.username }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Status explanation -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-question-circle me-2"></i>Status Meanings</h6>
+                </div>
+                <div class="card-body">
+                    <div class="small">
+                        <div class="mb-2">
+                            <span class="badge bg-primary me-2">New</span>
+                            Just submitted, awaiting review
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-warning text-dark me-2">Open</span>
+                            Being reviewed by support team
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-info me-2">In Progress</span>
+                            Support team is actively working on it
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-warning me-2">Pending</span>
+                            Waiting for your response
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-success me-2">Resolved</span>
+                            Issue has been resolved
+                        </div>
+                        <div class="mb-0">
+                            <span class="badge bg-secondary me-2">Closed</span>
+                            Ticket is closed and complete
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Force timestamp visibility - Updated Sept 10 2025 */
+.timeline {
+    position: relative;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 50px;
+    margin-bottom: 20px;
+}
+
+.timeline-item-right {
+    padding-left: 0;
+    padding-right: 50px;
+    text-align: right;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.timeline-item-right .timeline-marker {
+    left: auto;
+    right: 0;
+}
+
+.timeline-content {
+    flex: 1;
+}
+
+.bg-success-light {
+    background-color: #d1e7dd !important;
+}
+
+.timestamp-on-blue {
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-weight: normal !important;
+}
+
+/* Force all small elements in primary headers to be white */
+.bg-primary small {
+    color: #ffffff !important;
+}
+
+.card-header.bg-primary small {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-resize comment textarea
+    const textarea = document.querySelector('textarea[name="comment"]');
+    if (textarea) {
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+    }
+    
+    // Auto-refresh every 30 seconds if ticket is not closed
+    {% if ticket.status != 'CLOSED' %}
+    setInterval(function() {
+        // Only refresh if the user hasn't typed anything in the comment box
+        if (!textarea || !textarea.value.trim()) {
+            location.reload();
+        }
+    }, 30000);
+    {% endif %}
+    
+    // Smooth scroll to comment form when "Add a Message" is clicked
+    const addCommentSection = document.querySelector('form[method="post"]');
+    if (addCommentSection) {
+        // Focus on textarea when form is visible
+        const textarea = addCommentSection.querySelector('textarea');
+        if (textarea) {
+            textarea.focus();
+        }
+    }
+});
+</script>
+{% endblock %}

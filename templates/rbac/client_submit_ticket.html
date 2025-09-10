@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Submit Support Ticket - VacationDesktop{% endblock %}
+
+{% block content %}
+<div class="container-fluid fade-in">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Submit Support Ticket</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><i class="fas fa-life-ring me-2"></i>Submit Support Ticket</h1>
+                <div>
+                    <a href="{% url 'client_my_tickets' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-list me-2"></i>My Tickets
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i>New Support Request</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        {% if request.GET.imp_token %}
+                            <input type="hidden" name="imp_token" value="{{ request.GET.imp_token }}">
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label for="subject" class="form-label">Subject <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="subject" name="subject" required 
+                                   placeholder="Brief description of your issue">
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="category" class="form-label">Category</label>
+                                <select class="form-select" id="category" name="category">
+                                    {% for value, label in category_choices %}
+                                    <option value="{{ value }}" {% if value == 'OTHER' %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="priority" class="form-label">Priority</label>
+                                <select class="form-select" id="priority" name="priority">
+                                    {% for value, label in priority_choices %}
+                                    <option value="{{ value }}" {% if value == 'MEDIUM' %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">
+                                    <small>
+                                        <strong>Urgent:</strong> System down, critical business impact<br>
+                                        <strong>High:</strong> Significant functionality affected<br>
+                                        <strong>Medium:</strong> Some functionality affected<br>
+                                        <strong>Low:</strong> Minor issue or question
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="description" name="description" rows="6" required
+                                      placeholder="Please provide a detailed description of your issue or request. Include any steps you've already tried and any error messages you've encountered."></textarea>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Tips for faster support:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Be specific about what you were trying to do</li>
+                                <li>Include any error messages exactly as they appear</li>
+                                <li>Mention which browser/device you're using if relevant</li>
+                                <li>Let us know if this worked before and when it stopped working</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-2"></i>Submit Ticket
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Help sidebar -->
+        <div class="col-md-4 col-lg-3">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-question-circle me-2"></i>Need Help?</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6><i class="fas fa-clock me-2"></i>Response Times</h6>
+                        <ul class="list-unstyled small">
+                            <li><span class="badge bg-danger me-2">Urgent</span>Within 2 hours</li>
+                            <li><span class="badge bg-warning me-2">High</span>Within 4 hours</li>
+                            <li><span class="badge bg-info me-2">Medium</span>Within 1 business day</li>
+                            <li><span class="badge bg-secondary me-2">Low</span>Within 2 business days</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6><i class="fas fa-headset me-2"></i>Support Hours</h6>
+                        <p class="small mb-1">Monday - Friday: 9 AM - 6 PM EST</p>
+                        <p class="small mb-0">Emergency support available 24/7 for Urgent issues</p>
+                    </div>
+                    
+                    <div class="alert alert-light small">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Before submitting:</strong> Check if your issue might be resolved by logging out and back in, or clearing your browser cache.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-resize description textarea
+    const textarea = document.getElementById('description');
+    if (textarea) {
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+    }
+    
+    // Priority selection guidance
+    const prioritySelect = document.getElementById('priority');
+    if (prioritySelect) {
+        prioritySelect.addEventListener('change', function() {
+            const priority = this.value;
+            const categorySelect = document.getElementById('category');
+            
+            // Auto-suggest category based on priority
+            if (priority === 'URGENT' && categorySelect.value === 'OTHER') {
+                categorySelect.value = 'TECHNICAL';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -109,6 +109,28 @@ def dashboard_view(request):
             'total_contacts': 0,    # Placeholder for future functionality
             'pending_invoices': 0,  # Placeholder for future functionality
         }
+        
+        # Add support ticket statistics for client users
+        context['support_stats'] = {
+            'total_tickets': SupportTicket.objects.filter(created_for=user).count(),
+            'open_tickets': SupportTicket.objects.filter(
+                created_for=user, 
+                status__in=['NEW', 'OPEN', 'IN_PROGRESS']
+            ).count(),
+            'pending_tickets': SupportTicket.objects.filter(
+                created_for=user, 
+                status='PENDING'
+            ).count(),
+            'resolved_tickets': SupportTicket.objects.filter(
+                created_for=user, 
+                status='RESOLVED'
+            ).count(),
+        }
+        
+        # Recent support tickets for the user
+        context['recent_tickets'] = SupportTicket.objects.filter(
+            created_for=user
+        ).order_by('-created_at')[:5]
     
     # Recent activity
     context['recent_activity'] = AuditLog.objects.filter(
@@ -571,6 +593,181 @@ def change_user_password_view(request, user_id):
     }
     
     return render(request, 'rbac/change_user_password.html', context)
+
+
+# Client Support Ticket Views
+
+@login_required
+def client_submit_ticket_view(request):
+    """Allow client users to submit support tickets"""
+    # Permission check - all client users can submit tickets
+    if request.user.is_system_user():
+        messages.error(request, 'Use the staff ticket creation form instead.')
+        return redirect('create_ticket')
+    
+    if request.method == 'POST':
+        subject = request.POST.get('subject')
+        description = request.POST.get('description')
+        priority = request.POST.get('priority', 'MEDIUM')
+        category = request.POST.get('category', 'OTHER')
+        
+        if subject and description:
+            ticket = SupportTicket.objects.create(
+                tenant=request.user.tenant,
+                subject=subject,
+                description=description,
+                priority=priority,
+                category=category,
+                created_by=request.user,  # Staff member field, but for client tickets this will be the client
+                created_for=request.user, # Client user who submitted it
+                status='NEW'
+            )
+            
+            # Log the creation
+            AuditLog.objects.create(
+                user=request.user,
+                tenant=request.user.tenant,
+                action='TICKET_CREATE',
+                resource_type='SupportTicket',
+                resource_id=str(ticket.id),
+                details={
+                    'ticket_number': ticket.ticket_number,
+                    'subject': subject,
+                    'priority': priority,
+                    'submitted_by_client': True
+                },
+                ip_address=get_client_ip(request),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            messages.success(request, f'Support ticket {ticket.ticket_number} submitted successfully. Our support team will review your request.')
+            
+            # Preserve impersonation token when redirecting
+            redirect_url = 'client_my_tickets'
+            impersonation_token = request.GET.get('imp_token') or request.POST.get('imp_token')
+            if impersonation_token:
+                from django.urls import reverse
+                return redirect(f"{reverse(redirect_url)}?imp_token={impersonation_token}")
+            
+            return redirect(redirect_url)
+        else:
+            messages.error(request, 'Please fill in all required fields.')
+    
+    context = {
+        'priority_choices': SupportTicket.PRIORITY_LEVELS,
+        'category_choices': SupportTicket.CATEGORY_CHOICES,
+    }
+    
+    return render(request, 'rbac/client_submit_ticket.html', context)
+
+
+@login_required
+def client_my_tickets_view(request):
+    """Show client user their submitted tickets"""
+    # Permission check - all client users can view their own tickets
+    if request.user.is_system_user():
+        messages.error(request, 'Use the staff ticket management interface instead.')
+        return redirect('ticket_list')
+    
+    # Get tickets for current user
+    tickets = SupportTicket.objects.filter(
+        created_for=request.user
+    ).order_by('-created_at')
+    
+    # Apply basic filters
+    status_filter = request.GET.get('status', '')
+    if status_filter:
+        tickets = tickets.filter(status=status_filter)
+    
+    # Pagination
+    paginator = Paginator(tickets, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'tickets': page_obj,
+        'status_filter': status_filter,
+        'status_choices': SupportTicket.STATUS_CHOICES,
+        'total_tickets': tickets.count(),
+        'open_tickets': SupportTicket.objects.filter(
+            created_for=request.user, 
+            status__in=['NEW', 'OPEN', 'IN_PROGRESS']
+        ).count(),
+        'resolved_tickets': SupportTicket.objects.filter(
+            created_for=request.user, 
+            status='RESOLVED'
+        ).count(),
+    }
+    
+    return render(request, 'rbac/client_my_tickets.html', context)
+
+
+@login_required
+def client_ticket_detail_view(request, ticket_id):
+    """Allow client users to view their own ticket details and add comments"""
+    # Permission check - users can only view their own tickets
+    if request.user.is_system_user():
+        messages.error(request, 'Use the staff ticket management interface instead.')
+        return redirect('ticket_detail', ticket_id=ticket_id)
+    
+    # Ensure user can only view their own tickets
+    ticket = get_object_or_404(SupportTicket, id=ticket_id, created_for=request.user)
+    
+    # Handle POST requests for adding comments
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'add_comment':
+            comment_text = request.POST.get('comment', '').strip()
+            
+            if comment_text:
+                comment = TicketComment.objects.create(
+                    ticket=ticket,
+                    author=request.user,
+                    comment=comment_text,
+                    is_internal=False  # Client comments are never internal
+                )
+                
+                # Log the comment
+                AuditLog.objects.create(
+                    user=request.user,
+                    tenant=ticket.tenant,
+                    action='TICKET_COMMENT',
+                    resource_type='SupportTicket',
+                    resource_id=str(ticket.id),
+                    details={
+                        'ticket_number': ticket.ticket_number,
+                        'is_internal': False,
+                        'comment_preview': comment_text[:100],
+                        'by_client': True
+                    },
+                    ip_address=get_client_ip(request),
+                    user_agent=request.META.get('HTTP_USER_AGENT', '')
+                )
+                
+                messages.success(request, 'Your comment has been added successfully.')
+            else:
+                messages.error(request, 'Comment cannot be empty.')
+        
+        # Preserve impersonation token when redirecting
+        impersonation_token = request.GET.get('imp_token') or request.POST.get('imp_token')
+        if impersonation_token:
+            from django.urls import reverse
+            return redirect(f"{reverse('client_ticket_detail', args=[ticket.id])}?imp_token={impersonation_token}")
+        
+        return redirect('client_ticket_detail', ticket_id=ticket.id)
+    
+    # Get comments (exclude internal staff comments)
+    comments = ticket.comments.filter(is_internal=False).order_by('created_at')
+    
+    context = {
+        'ticket': ticket,
+        'comments': comments,
+        'can_comment': ticket.status not in ['CLOSED'],  # Allow comments unless closed
+    }
+    
+    return render(request, 'rbac/client_ticket_detail.html', context)
 
 
 # Staff Dashboard and Support Ticket Management
@@ -1060,15 +1257,6 @@ def send_ticket_notification_email(ticket, comment=None, notification_type='comm
     if not ticket.created_for or not ticket.created_for.email:
         return False
     
-    # Set a timeout for email operations to prevent hanging
-    import signal
-    
-    def timeout_handler(signum, frame):
-        raise Exception("Email sending timeout")
-    
-    signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(10)  # 10 second timeout for email sending
-    
     try:
         # Prepare email context
         context = {
@@ -1175,18 +1363,11 @@ def send_ticket_notification_email(ticket, comment=None, notification_type='comm
             fail_silently=True,  # Don't raise exceptions for email failures
         )
         
-        # Clear the timeout
-        signal.alarm(0)
         return True
         
     except Exception as e:
-        # Clear the timeout on error
-        signal.alarm(0)
         print(f"Failed to send email notification: {str(e)}")
         return False
-    finally:
-        # Ensure timeout is always cleared
-        signal.alarm(0)
 
 
 def create_emergency_admin(request):

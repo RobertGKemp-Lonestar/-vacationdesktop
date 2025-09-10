@@ -148,6 +148,22 @@
                         </div>
                         {% endif %}
                     {% endif %}
+                    
+                    <!-- Support Ticket Actions (for all client users) -->
+                    {% if not user.is_system_user %}
+                    <div class="row mt-3">
+                        <div class="col-md-4 mb-3">
+                            <a href="{% url 'client_submit_ticket' %}{% if request.GET.imp_token %}?imp_token={{ request.GET.imp_token }}{% endif %}" class="btn btn-outline-danger btn-block w-100">
+                                <i class="fas fa-life-ring me-2"></i>Submit Support Ticket
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <a href="{% url 'client_my_tickets' %}{% if request.GET.imp_token %}?imp_token={{ request.GET.imp_token }}{% endif %}" class="btn btn-outline-info btn-block w-100">
+                                <i class="fas fa-list me-2"></i>My Support Tickets
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -202,6 +218,75 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Support Ticket Summary (Client Users Only) -->
+            {% if not user.is_system_user and support_stats %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-headset me-2"></i>Support Tickets</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center mb-3">
+                        <div class="col-6">
+                            <div class="h4 mb-0 text-primary">{{ support_stats.total_tickets }}</div>
+                            <small class="text-muted">Total</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="h4 mb-0 {% if support_stats.open_tickets > 0 %}text-warning{% else %}text-success{% endif %}">
+                                {{ support_stats.open_tickets }}
+                            </div>
+                            <small class="text-muted">Open</small>
+                        </div>
+                    </div>
+                    
+                    {% if support_stats.pending_tickets > 0 %}
+                    <div class="alert alert-warning alert-sm py-2">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>{{ support_stats.pending_tickets }}</strong> ticket{{ support_stats.pending_tickets|pluralize }} 
+                        waiting for your response
+                    </div>
+                    {% endif %}
+                    
+                    {% if recent_tickets %}
+                    <div class="mb-3">
+                        <h6 class="small text-muted mb-2">Recent Tickets</h6>
+                        {% for ticket in recent_tickets %}
+                        <div class="d-flex justify-content-between align-items-center py-1 {% if not forloop.last %}border-bottom{% endif %}">
+                            <div class="flex-grow-1">
+                                <a href="{% url 'client_ticket_detail' ticket.id %}{% if request.GET.imp_token %}?imp_token={{ request.GET.imp_token }}{% endif %}" class="text-decoration-none">
+                                    <div class="small fw-bold">{{ ticket.ticket_number }}</div>
+                                    <div class="small text-muted">{{ ticket.subject|truncatechars:30 }}</div>
+                                </a>
+                            </div>
+                            <div class="text-end">
+                                {% if ticket.status == 'NEW' %}
+                                    <span class="badge bg-primary badge-sm">New</span>
+                                {% elif ticket.status == 'OPEN' %}
+                                    <span class="badge bg-warning badge-sm">Open</span>
+                                {% elif ticket.status == 'IN_PROGRESS' %}
+                                    <span class="badge bg-info badge-sm">In Progress</span>
+                                {% elif ticket.status == 'PENDING' %}
+                                    <span class="badge bg-warning badge-sm">Pending</span>
+                                {% elif ticket.status == 'RESOLVED' %}
+                                    <span class="badge bg-success badge-sm">Resolved</span>
+                                {% else %}
+                                    <span class="badge bg-secondary badge-sm">{{ ticket.get_status_display }}</span>
+                                {% endif %}
+                                <div class="small text-muted">{{ ticket.created_at|timesince }} ago</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-grid">
+                        <a href="{% url 'client_submit_ticket' %}{% if request.GET.imp_token %}?imp_token={{ request.GET.imp_token }}{% endif %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus me-1"></i>New Ticket
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
     

@@ -21,6 +21,11 @@ urlpatterns = [
     path('users/<uuid:user_id>/edit/', views.edit_user_view, name='edit_user'),
     path('users/<uuid:user_id>/change-password/', views.change_user_password_view, name='change_user_password'),
     
+    # Client support ticket URLs
+    path('support/submit/', views.client_submit_ticket_view, name='client_submit_ticket'),
+    path('support/my-tickets/', views.client_my_tickets_view, name='client_my_tickets'),
+    path('support/tickets/<uuid:ticket_id>/', views.client_ticket_detail_view, name='client_ticket_detail'),
+    
     # Staff dashboard and ticket management URLs
     path('staff/', views.staff_dashboard_view, name='staff_dashboard'),
     path('staff/tickets/', views.ticket_list_view, name='ticket_list'),
