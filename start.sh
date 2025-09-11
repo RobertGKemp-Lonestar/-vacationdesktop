@@ -47,6 +47,10 @@ fi
 echo "🔍 Running media configuration debug..."
 python manage.py debug_media
 
+# Test upload functionality
+echo "🧪 Testing upload functionality..."
+python manage.py test_upload
+
 # Wait for database with Django's connection handling
 echo "🔄 Waiting for database to be ready with Django..."
 for i in {1..30}; do

@@ -275,24 +275,35 @@ def tenant_settings_view(request):
     
     if request.method == 'POST':
         form = TenantSettingsForm(request.POST, request.FILES, instance=tenant)
+        
+        # Debug logging
+        logger.info(f"POST data received: {request.POST}")
+        logger.info(f"FILES data received: {request.FILES}")
+        
         if form.is_valid():
-            form.save()
-            
-            # Log the tenant settings update
-            AuditLog.objects.create(
-                user=request.user,
-                tenant=request.user.tenant,
-                action='UPDATE',
-                resource_type='Tenant Settings',
-                resource_id=str(tenant.id),
-                ip_address=get_client_ip(request),
-                user_agent=request.META.get('HTTP_USER_AGENT', '')[:200],
-                details={'fields_updated': list(form.changed_data)}
-            )
-            
-            messages.success(request, 'Company settings have been updated successfully!')
-            return redirect('tenant_settings')
+            try:
+                saved_tenant = form.save()
+                logger.info(f"Tenant saved successfully. Logo: {saved_tenant.logo}")
+                
+                # Log the tenant settings update
+                AuditLog.objects.create(
+                    user=request.user,
+                    tenant=request.user.tenant,
+                    action='UPDATE',
+                    resource_type='Tenant Settings',
+                    resource_id=str(tenant.id),
+                    ip_address=get_client_ip(request),
+                    user_agent=request.META.get('HTTP_USER_AGENT', '')[:200],
+                    details={'fields_updated': list(form.changed_data)}
+                )
+                
+                messages.success(request, 'Company settings have been updated successfully!')
+                return redirect('tenant_settings')
+            except Exception as e:
+                logger.error(f"Error saving tenant settings: {str(e)}")
+                messages.error(request, f'Error saving settings: {str(e)}')
         else:
+            logger.error(f"Form validation errors: {form.errors}")
             messages.error(request, 'Please correct the errors below.')
     else:
         form = TenantSettingsForm(instance=tenant)
