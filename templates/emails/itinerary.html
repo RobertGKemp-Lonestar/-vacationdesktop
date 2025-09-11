@@ -1,9 +1,18 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <title>{{ trip.trip_name }} - Itinerary</title>
+    <!--[if gte mso 9]>
+    <xml>
+        <o:OfficeDocumentSettings>
+            <o:AllowPNG/>
+            <o:PixelsPerInch>96</o:PixelsPerInch>
+        </o:OfficeDocumentSettings>
+    </xml>
+    <![endif]-->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -12,6 +21,15 @@
             max-width: 600px;
             margin: 0 auto;
             padding: 20px;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+        
+        /* Outlook-specific fixes */
+        table {
+            border-collapse: collapse;
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
         }
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -81,6 +99,17 @@
         .activity-description {
             white-space: pre-line;
             line-height: 1.8;
+            font-family: Arial, sans-serif;
+        }
+        
+        /* Outlook line break fix */
+        .outlook-line-break {
+            display: block;
+            height: 0;
+            font-size: 0;
+            line-height: 0;
+            margin: 0;
+            padding: 0;
         }
         .activity-tags {
             margin-top: 15px;
@@ -132,7 +161,13 @@
         }
     </style>
 </head>
-<body>
+<body style="margin: 0; padding: 0; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 0; padding: 0;">
+    <tr>
+        <td align="center" style="padding: 20px;">
+            <table cellpadding="0" cellspacing="0" border="0" width="600" style="max-width: 600px; width: 100%;">
+                <tr>
+                    <td style="padding: 0;">
     <div class="header">
         <h1>✈️ {{ trip.trip_name }}</h1>
         <p style="margin: 0; opacity: 0.9;">Your Complete Travel Itinerary</p>
@@ -175,7 +210,7 @@
     {% if trip.description %}
     <div style="background-color: #e8f4fd; border: 1px solid #b8daff; border-radius: 6px; padding: 20px; margin: 20px 0;">
         <h3 style="margin-top: 0; color: #0c63e4;">📖 About Your Trip</h3>
-        <div style="white-space: pre-line; line-height: 1.6;">{{ trip.description }}</div>
+        <div style="white-space: pre-line; line-height: 1.6; font-family: Arial, sans-serif;">{{ trip.description|linebreaks }}</div>
     </div>
     {% endif %}
 
@@ -193,7 +228,7 @@
             </div>
             <div class="itinerary-day-content">
                 {% if day.description %}
-                <div class="activity-description">{{ day.description }}</div>
+                <div style="white-space: pre-line; line-height: 1.8; font-family: Arial, sans-serif; margin-bottom: 15px;">{{ day.description|linebreaks }}</div>
                 
                 <!-- Activity detection badges -->
                 <div class="activity-tags">
@@ -306,5 +341,11 @@
             <em>This itinerary was prepared with care using VacationDesktop CRM</em>
         </p>
     </div>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
 </body>
 </html>
