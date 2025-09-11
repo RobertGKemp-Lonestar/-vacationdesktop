@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Send Invoice {{ invoice.invoice_number }} - Travel Advisor CRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-0">Send Invoice</h1>
+                    <p class="text-muted">Send {{ invoice.invoice_number }} to {{ invoice.client.full_name }}</p>
+                </div>
+                <div>
+                    <a href="{% url 'invoice_detail' invoice.id %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Invoice
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Send Invoice Form -->
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0">Email Invoice to Client</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <!-- Recipient Info -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label class="form-label">Sending to:</label>
+                                <div class="d-flex align-items-center p-3 bg-light rounded">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <span class="text-primary fw-bold">{{ invoice.client.first_name|first }}{{ invoice.client.last_name|first }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="mb-0">{{ invoice.client.full_name }}</h6>
+                                        <small class="text-muted">{{ invoice.client.email }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Email Preview -->
+                        <div class="mb-4">
+                            <h6>Email Details</h6>
+                            <div class="border rounded p-3">
+                                <div class="mb-2">
+                                    <strong>Subject:</strong> Invoice {{ invoice.invoice_number }} - ${{ invoice.total_amount|floatformat:2 }}
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Message:</strong>
+                                </div>
+                                <div class="bg-light p-3 rounded">
+                                    <p>Dear {{ invoice.client.first_name }},</p>
+                                    
+                                    <p>Please find your invoice attached for the following:</p>
+                                    
+                                    <ul>
+                                        <li><strong>Invoice Number:</strong> {{ invoice.invoice_number }}</li>
+                                        <li><strong>Amount:</strong> ${{ invoice.total_amount|floatformat:2 }}</li>
+                                        {% if invoice.due_date %}<li><strong>Due Date:</strong> {{ invoice.due_date|date:"F d, Y" }}</li>{% endif %}
+                                        {% if invoice.trip %}<li><strong>Trip:</strong> {{ invoice.trip.trip_name }}</li>{% endif %}
+                                    </ul>
+                                    
+                                    {% if invoice.notes %}
+                                    <p><strong>Notes:</strong><br>{{ invoice.notes|linebreaks }}</p>
+                                    {% endif %}
+                                    
+                                    <p>Payment can be made via the methods outlined in the invoice. Please don't hesitate to contact me if you have any questions.</p>
+                                    
+                                    <p>Thank you for your business!</p>
+                                    
+                                    <p>Best regards,<br>{{ user.get_full_name|default:user.username }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Additional Options -->
+                        <div class="mb-4">
+                            <h6>Send Options</h6>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="send_copy" name="send_copy" checked>
+                                <label class="form-check-label" for="send_copy">
+                                    Send a copy to myself
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="mark_sent" name="mark_sent" checked>
+                                <label class="form-check-label" for="mark_sent">
+                                    Mark invoice as "Sent" after sending
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Send Actions -->
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <small class="text-muted">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    The invoice will be attached as a PDF to the email.
+                                </small>
+                            </div>
+                            
+                            <div>
+                                <a href="{% url 'invoice_detail' invoice.id %}" class="btn btn-outline-secondary me-2">
+                                    Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-send"></i> Send Invoice
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Invoice Summary Sidebar -->
+        <div class="col-md-4">
+            <!-- Invoice Summary -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0">Invoice Summary</h6>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-6">Invoice #:</dt>
+                        <dd class="col-sm-6">{{ invoice.invoice_number }}</dd>
+                        
+                        <dt class="col-sm-6">Date:</dt>
+                        <dd class="col-sm-6">{{ invoice.invoice_date|date:"M d, Y" }}</dd>
+                        
+                        {% if invoice.due_date %}
+                        <dt class="col-sm-6">Due Date:</dt>
+                        <dd class="col-sm-6">{{ invoice.due_date|date:"M d, Y" }}</dd>
+                        {% endif %}
+                        
+                        <dt class="col-sm-6">Status:</dt>
+                        <dd class="col-sm-6">
+                            {% if invoice.status == 'DRAFT' %}
+                                <span class="badge bg-secondary">{{ invoice.get_status_display }}</span>
+                            {% elif invoice.status == 'SENT' %}
+                                <span class="badge bg-warning">{{ invoice.get_status_display }}</span>
+                            {% elif invoice.status == 'VIEWED' %}
+                                <span class="badge bg-info">{{ invoice.get_status_display }}</span>
+                            {% elif invoice.status == 'PAID' %}
+                                <span class="badge bg-success">{{ invoice.get_status_display }}</span>
+                            {% endif %}
+                        </dd>
+                        
+                        <dt class="col-sm-6">Amount:</dt>
+                        <dd class="col-sm-6"><strong class="text-success">${{ invoice.total_amount|floatformat:2 }}</strong></dd>
+                        
+                        {% if invoice.paid_amount > 0 %}
+                        <dt class="col-sm-6">Paid:</dt>
+                        <dd class="col-sm-6">${{ invoice.paid_amount|floatformat:2 }}</dd>
+                        
+                        <dt class="col-sm-6">Balance:</dt>
+                        <dd class="col-sm-6"><strong class="text-warning">${{ invoice.balance_due|floatformat:2 }}</strong></dd>
+                        {% endif %}
+                    </dl>
+                    
+                    {% if invoice.trip %}
+                        <hr>
+                        <h6>Related Trip</h6>
+                        <p class="mb-0">
+                            <a href="{% url 'trip_detail' invoice.trip.id %}" class="text-decoration-none">
+                                {{ invoice.trip.trip_name }}
+                            </a>
+                            <br>
+                            <small class="text-muted">{{ invoice.trip.destination }}</small>
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Client Information -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0">Client Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <span class="text-primary fw-bold">{{ invoice.client.first_name|first }}{{ invoice.client.last_name|first }}</span>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="mb-0">{{ invoice.client.full_name }}</h6>
+                            <small class="text-muted">{{ invoice.client.email }}</small>
+                            {% if invoice.client.phone %}
+                                <br><small class="text-muted">{{ invoice.client.phone }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <a href="{% url 'client_detail' invoice.client.id %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-person"></i> View Client Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Bootstrap Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+{% endblock %}

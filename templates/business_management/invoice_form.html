@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} - Travel Advisor CRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-0">{{ title }}</h1>
+                    <p class="text-muted">{% if invoice %}Update invoice information{% else %}Create a new invoice for your client{% endif %}</p>
+                </div>
+                <div>
+                    <a href="{% url 'invoice_list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Invoices
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0">Invoice Information</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Invoice Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary border-bottom pb-2 mb-3">Basic Information</h6>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="client_id" class="form-label">Client <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="client_id" name="client_id" required {% if invoice %}disabled{% endif %}>
+                                        <option value="">Select a client...</option>
+                                        {% for client in clients %}
+                                            <option value="{{ client.id }}" 
+                                                    {% if invoice and invoice.client.id == client.id %}selected
+                                                    {% elif not invoice and client.id|default:"" %}selected{% endif %}>
+                                                {{ client.full_name }} ({{ client.email }})
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    {% if invoice %}
+                                        <input type="hidden" name="client_id" value="{{ invoice.client.id }}">
+                                        <small class="form-text text-muted">Client cannot be changed after invoice creation</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="trip_id" class="form-label">Related Trip (Optional)</label>
+                                    <select class="form-select" id="trip_id" name="trip_id">
+                                        <option value="">No trip selected</option>
+                                        {% for trip in trips %}
+                                            <option value="{{ trip.id }}" 
+                                                    {% if invoice and invoice.trip and invoice.trip.id == trip.id %}selected{% endif %}>
+                                                {{ trip.trip_name }} - {{ trip.client.full_name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <small class="form-text text-muted">Link this invoice to a specific trip</small>
+                                </div>
+                            </div>
+                            
+                            {% if invoice %}
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Invoice Number</label>
+                                        <input type="text" class="form-control" value="{{ invoice.invoice_number }}" readonly>
+                                        <small class="form-text text-muted">Invoice number is automatically generated</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Invoice Date</label>
+                                        <input type="text" class="form-control" value="{{ invoice.invoice_date|date:'M d, Y' }}" readonly>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Invoice Details -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary border-bottom pb-2 mb-3">Invoice Details</h6>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="total_amount" class="form-label">Total Amount <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" step="0.01" class="form-control" id="total_amount" name="total_amount" 
+                                               value="{% if invoice %}{{ invoice.total_amount }}{% endif %}" 
+                                               placeholder="5000.00" required>
+                                    </div>
+                                    <small class="form-text text-muted">Total amount to be invoiced</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="due_date" class="form-label">Due Date</label>
+                                    <input type="date" class="form-control" id="due_date" name="due_date" 
+                                           value="{% if invoice and invoice.due_date %}{{ invoice.due_date|date:'Y-m-d' }}{% endif %}">
+                                    <small class="form-text text-muted">When payment is due from client</small>
+                                </div>
+                            </div>
+                            
+                            {% if invoice %}
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="status" class="form-label">Status</label>
+                                        <select class="form-select" id="status" name="status">
+                                            {% for value, label in status_choices %}
+                                                <option value="{{ value }}" 
+                                                        {% if invoice and invoice.status == value %}selected{% endif %}>
+                                                    {{ label }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary border-bottom pb-2 mb-3">Additional Information</h6>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="notes" class="form-label">Notes</label>
+                                    <textarea class="form-control" id="notes" name="notes" rows="4" 
+                                              placeholder="Payment terms, special instructions, additional details...">{% if invoice %}{{ invoice.notes }}{% endif %}</textarea>
+                                    <small class="form-text text-muted">Internal notes and payment terms</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if not invoice %}
+                            <!-- Line Items Preview (for future enhancement) -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h6 class="text-primary border-bottom pb-2 mb-3">Invoice Items</h6>
+                                    <div class="alert alert-info">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        <strong>Coming Soon:</strong> Detailed line items will be available in a future update. For now, enter the total amount above.
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'invoice_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                            <div>
+                                <button type="submit" class="btn btn-primary me-2">
+                                    <i class="bi bi-check-circle"></i> {{ action }} Invoice
+                                </button>
+                                {% if not invoice %}
+                                    <button type="submit" name="action" value="create_and_send" class="btn btn-success">
+                                        <i class="bi bi-envelope"></i> Create & Send
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Bootstrap Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+
+<script>
+// Form validation and client filtering
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const clientSelect = document.getElementById('client_id');
+    const tripSelect = document.getElementById('trip_id');
+    const dueDateInput = document.getElementById('due_date');
+    
+    // Set default due date to 30 days from now
+    if (!dueDateInput.value) {
+        const futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + 30);
+        dueDateInput.value = futureDate.toISOString().split('T')[0];
+    }
+    
+    // Filter trips based on selected client
+    function filterTrips() {
+        const selectedClientId = clientSelect.value;
+        const allOptions = Array.from(tripSelect.options);
+        
+        // Show all options first
+        allOptions.forEach(option => {
+            option.style.display = 'block';
+        });
+        
+        if (selectedClientId) {
+            allOptions.forEach(option => {
+                if (option.value && !option.text.includes(getClientName(selectedClientId))) {
+                    option.style.display = 'none';
+                }
+            });
+        }
+    }
+    
+    function getClientName(clientId) {
+        const clientOption = clientSelect.querySelector(`option[value="${clientId}"]`);
+        return clientOption ? clientOption.text.split(' (')[0] : '';
+    }
+    
+    clientSelect.addEventListener('change', filterTrips);
+    
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        const requiredFields = form.querySelectorAll('[required]');
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+        }
+    });
+});
+</script>
+{% endblock %}

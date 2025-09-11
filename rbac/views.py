@@ -103,11 +103,16 @@ def dashboard_view(request):
     
     # Tenant-level statistics for client users
     elif user.tenant:
+        from business_management.models import Client, Invoice
+        
         context['stats'] = {
             'tenant_users': User.objects.filter(tenant=user.tenant).count(),
             'active_campaigns': 0,  # Placeholder for future functionality
-            'total_contacts': 0,    # Placeholder for future functionality
-            'pending_invoices': 0,  # Placeholder for future functionality
+            'total_contacts': Client.objects.filter(tenant=user.tenant).count(),
+            'pending_invoices': Invoice.objects.filter(
+                client__tenant=user.tenant, 
+                status__in=['SENT', 'VIEWED']
+            ).count(),
         }
         
         # Add support ticket statistics for client users

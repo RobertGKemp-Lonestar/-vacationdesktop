@@ -1,0 +1,404 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ client.full_name }} - Travel Advisor CRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-0">{{ client.full_name }}</h1>
+                    <p class="text-muted">{{ client.email }} • Client since {{ client.created_at|date:"M Y" }}</p>
+                </div>
+                <div>
+                    <a href="{% url 'client_list' %}" class="btn btn-outline-secondary me-2">
+                        <i class="bi bi-arrow-left"></i> Back to Clients
+                    </a>
+                    <a href="{% url 'client_edit' client.id %}" class="btn btn-primary">
+                        <i class="bi bi-pencil"></i> Edit Client
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Status -->
+    <div class="row mb-4">
+        <div class="col-12">
+            {% if not client.is_active %}
+                <div class="alert alert-warning d-flex align-items-center" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    This client is marked as inactive.
+                </div>
+            {% endif %}
+            {% if client.vip_status != 'REGULAR' %}
+                <div class="alert alert-success d-flex align-items-center" role="alert">
+                    <i class="bi bi-star me-2"></i>
+                    This is a {{ client.get_vip_status_display }} client.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Client Information -->
+        <div class="col-md-8">
+            <!-- Basic Information -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0">Client Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">Name:</dt>
+                                <dd class="col-sm-8">{{ client.full_name }}</dd>
+                                <dt class="col-sm-4">Email:</dt>
+                                <dd class="col-sm-8">{{ client.email }}</dd>
+                                <dt class="col-sm-4">Phone:</dt>
+                                <dd class="col-sm-8">{{ client.phone|default:"Not provided" }}</dd>
+                                <dt class="col-sm-4">VIP Status:</dt>
+                                <dd class="col-sm-8">
+                                    {% if client.vip_status == 'VIP' %}
+                                        <span class="badge bg-warning text-dark">{{ client.get_vip_status_display }}</span>
+                                    {% elif client.vip_status == 'PREMIUM' %}
+                                        <span class="badge bg-success">{{ client.get_vip_status_display }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ client.get_vip_status_display }}</span>
+                                    {% endif %}
+                                </dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-5">Lead Source:</dt>
+                                <dd class="col-sm-7">{{ client.get_lead_source_display }}</dd>
+                                <dt class="col-sm-5">Preferred Contact:</dt>
+                                <dd class="col-sm-7">{{ client.get_preferred_communication_display }}</dd>
+                                <dt class="col-sm-5">Last Contact:</dt>
+                                <dd class="col-sm-7">
+                                    {% if client.last_contact_date %}
+                                        {{ client.last_contact_date|date:"M d, Y" }}
+                                    {% else %}
+                                        Never
+                                    {% endif %}
+                                </dd>
+                                <dt class="col-sm-5">Status:</dt>
+                                <dd class="col-sm-7">
+                                    {% if client.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    {% endif %}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                    
+                    <!-- Address Information -->
+                    {% if client.address or client.city or client.state %}
+                        <hr>
+                        <h6>Address</h6>
+                        <p class="mb-0">
+                            {% if client.address %}{{ client.address }}<br>{% endif %}
+                            {% if client.city %}{{ client.city }}{% if client.state %}, {{ client.state }}{% endif %} {{ client.postal_code }}{% endif %}
+                            {% if client.country %}<br>{{ client.country }}{% endif %}
+                        </p>
+                    {% endif %}
+                    
+                    <!-- Travel Preferences -->
+                    {% if client.preferred_destinations or client.travel_style or client.budget_range_min %}
+                        <hr>
+                        <h6>Travel Preferences</h6>
+                        <div class="row">
+                            {% if client.budget_range_min or client.budget_range_max %}
+                                <div class="col-md-6">
+                                    <strong>Budget Range:</strong>
+                                    {% if client.budget_range_min %}${{ client.budget_range_min|floatformat:0 }}{% else %}No minimum{% endif %}
+                                    -
+                                    {% if client.budget_range_max %}${{ client.budget_range_max|floatformat:0 }}{% else %}No maximum{% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% if client.preferred_destinations %}
+                            <p><strong>Preferred Destinations:</strong> {{ client.preferred_destinations }}</p>
+                        {% endif %}
+                        {% if client.travel_style %}
+                            <p><strong>Travel Style:</strong> {{ client.travel_style }}</p>
+                        {% endif %}
+                        {% if client.special_needs %}
+                            <p><strong>Special Needs:</strong> {{ client.special_needs }}</p>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recent Trips -->
+            {% if trips %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">Recent Trips ({{ total_trips }} total)</h6>
+                        <a href="{% url 'trip_create' %}?client={{ client.id }}" class="btn btn-sm btn-success">
+                            <i class="bi bi-plus-circle"></i> New Trip
+                        </a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Trip</th>
+                                        <th>Dates</th>
+                                        <th>Status</th>
+                                        <th>Amount</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for trip in trips %}
+                                        <tr>
+                                            <td>
+                                                <a href="{% url 'trip_detail' trip.id %}" class="text-decoration-none">
+                                                    <strong>{{ trip.trip_name }}</strong>
+                                                </a>
+                                                <br>
+                                                <small class="text-muted">{{ trip.destination }}</small>
+                                            </td>
+                                            <td>
+                                                <small>{{ trip.departure_date|date:"M d, Y" }} - {{ trip.return_date|date:"M d, Y" }}</small>
+                                            </td>
+                                            <td>
+                                                {% if trip.status == 'DRAFT' %}
+                                                    <span class="badge bg-secondary">{{ trip.get_status_display }}</span>
+                                                {% elif trip.status == 'CONFIRMED' %}
+                                                    <span class="badge bg-success">{{ trip.get_status_display }}</span>
+                                                {% elif trip.status == 'IN_PROGRESS' %}
+                                                    <span class="badge bg-info">{{ trip.get_status_display }}</span>
+                                                {% elif trip.status == 'COMPLETED' %}
+                                                    <span class="badge bg-primary">{{ trip.get_status_display }}</span>
+                                                {% elif trip.status == 'CANCELLED' %}
+                                                    <span class="badge bg-danger">{{ trip.get_status_display }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if trip.total_amount %}
+                                                    ${{ trip.total_amount|floatformat:0 }}
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'trip_detail' trip.id %}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Recent Invoices -->
+            {% if invoices %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">Recent Invoices</h6>
+                        <a href="{% url 'invoice_create' %}?client={{ client.id }}" class="btn btn-sm btn-info">
+                            <i class="bi bi-plus-circle"></i> New Invoice
+                        </a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Invoice</th>
+                                        <th>Date</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for invoice in invoices %}
+                                        <tr>
+                                            <td>
+                                                <a href="{% url 'invoice_detail' invoice.id %}" class="text-decoration-none">
+                                                    {{ invoice.invoice_number }}
+                                                </a>
+                                            </td>
+                                            <td>{{ invoice.invoice_date|date:"M d, Y" }}</td>
+                                            <td>
+                                                <strong>${{ invoice.total_amount|floatformat:2 }}</strong>
+                                                {% if invoice.balance_due > 0 %}
+                                                    <br><small class="text-warning">Balance: ${{ invoice.balance_due|floatformat:2 }}</small>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if invoice.status == 'DRAFT' %}
+                                                    <span class="badge bg-secondary">{{ invoice.get_status_display }}</span>
+                                                {% elif invoice.status == 'SENT' %}
+                                                    <span class="badge bg-warning">{{ invoice.get_status_display }}</span>
+                                                {% elif invoice.status == 'VIEWED' %}
+                                                    <span class="badge bg-info">{{ invoice.get_status_display }}</span>
+                                                {% elif invoice.status == 'PAID' %}
+                                                    <span class="badge bg-success">{{ invoice.get_status_display }}</span>
+                                                {% elif invoice.status == 'OVERDUE' %}
+                                                    <span class="badge bg-danger">{{ invoice.get_status_display }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'invoice_detail' invoice.id %}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Recent Communications -->
+            {% if recent_communications %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">Recent Communications</h6>
+                        <a href="{% url 'client_communications' client.id %}" class="btn btn-sm btn-dark">
+                            <i class="bi bi-clock-history"></i> View All
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        {% for comm in recent_communications %}
+                            <div class="d-flex align-items-start mb-3">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-info bg-opacity-10 rounded d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                        <i class="bi bi-envelope text-info"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-0">{{ comm.subject|truncatechars:40 }}</h6>
+                                    <small class="text-muted">{{ comm.created_at|date:"M d, Y g:i A" }}</small>
+                                    {% if comm.notes %}
+                                        <p class="text-muted mt-1 mb-0">{{ comm.notes|truncatewords:15 }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Notes -->
+            {% if notes %}
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0">
+                        <h6 class="mb-0">Notes</h6>
+                    </div>
+                    <div class="card-body">
+                        {% for note in notes %}
+                            <div class="mb-3 pb-3 border-bottom">
+                                <h6 class="mb-1">{{ note.title|default:"Note" }}</h6>
+                                <small class="text-muted">{{ note.created_at|date:"M d, Y g:i A" }}</small>
+                                <p class="mt-2 mb-0">{{ note.content|linebreaks }}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <!-- Quick Actions -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'send_client_email' client.id %}" class="btn btn-primary">
+                            <i class="bi bi-envelope"></i> Send Email
+                        </a>
+                        <a href="{% url 'trip_create' %}?client={{ client.id }}" class="btn btn-outline-success">
+                            <i class="bi bi-airplane"></i> Create Trip
+                        </a>
+                        <a href="{% url 'invoice_create' %}?client={{ client.id }}" class="btn btn-outline-info">
+                            <i class="bi bi-receipt"></i> Create Invoice
+                        </a>
+                        <a href="{% url 'client_communications' client.id %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-clock-history"></i> View Communications
+                        </a>
+                        <a href="{% url 'client_edit' client.id %}" class="btn btn-outline-warning">
+                            <i class="bi bi-pencil"></i> Edit Client
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Client Statistics -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0">Client Summary</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 border-end">
+                            <h4 class="text-primary mb-0">{{ total_trips|default:0 }}</h4>
+                            <small class="text-muted">Trip{{ total_trips|pluralize }}</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-success mb-0">${{ total_spent|floatformat:0|default:0 }}</h4>
+                            <small class="text-muted">Total Spent</small>
+                        </div>
+                    </div>
+                    {% if pending_balance %}
+                        <hr>
+                        <div class="text-center">
+                            <h5 class="text-warning mb-0">${{ pending_balance|floatformat:2 }}</h5>
+                            <small class="text-muted">Pending Balance</small>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Upcoming Trips -->
+            {% if upcoming_trips %}
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0">
+                        <h6 class="mb-0">Upcoming Trips</h6>
+                    </div>
+                    <div class="card-body">
+                        {% for trip in upcoming_trips %}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <a href="{% url 'trip_detail' trip.id %}" class="text-decoration-none">
+                                        {{ trip.trip_name|truncatechars:20 }}
+                                    </a>
+                                    <br>
+                                    <small class="text-muted">{{ trip.destination }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <small class="text-success">{{ trip.departure_date|date:"M d" }}</small>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Add Bootstrap Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+{% endblock %}

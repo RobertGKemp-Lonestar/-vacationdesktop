@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice {{ invoice.invoice_number }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .invoice-details {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .invoice-details ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .amount {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #28a745;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Invoice {{ invoice.invoice_number }}</h1>
+        <p>Travel Services Invoice</p>
+    </div>
+
+    <p>Dear {{ invoice.client.first_name }},</p>
+
+    <p>Thank you for choosing our travel services. Please find your invoice details below:</p>
+
+    <div class="invoice-details">
+        <h3>Invoice Details</h3>
+        <ul>
+            <li><strong>Invoice Number:</strong> {{ invoice.invoice_number }}</li>
+            <li><strong>Invoice Date:</strong> {{ invoice.invoice_date|date:"F d, Y" }}</li>
+            {% if invoice.due_date %}
+            <li><strong>Due Date:</strong> {{ invoice.due_date|date:"F d, Y" }}</li>
+            {% endif %}
+            {% if invoice.trip %}
+            <li><strong>Trip:</strong> {{ invoice.trip.trip_name }}</li>
+            <li><strong>Destination:</strong> {{ invoice.trip.destination }}</li>
+            {% endif %}
+            <li><strong>Amount Due:</strong> <span class="amount">${{ invoice.total_amount|floatformat:2 }}</span></li>
+        </ul>
+    </div>
+
+    {% if invoice.notes %}
+    <div style="background-color: #fff3cd; padding: 15px; border-radius: 6px; margin: 20px 0;">
+        <h4>Additional Notes:</h4>
+        <p>{{ invoice.notes|linebreaks }}</p>
+    </div>
+    {% endif %}
+
+    <p>{{ message|default:"Please remit payment by the due date listed above. If you have any questions about this invoice, please don't hesitate to contact us." }}</p>
+
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="#" class="btn">View Invoice Online</a>
+    </div>
+
+    <p>Payment can be made by:</p>
+    <ul>
+        <li>Check (payable to: [Your Business Name])</li>
+        <li>Bank transfer</li>
+        <li>Credit card (contact us for details)</li>
+    </ul>
+
+    <p>We appreciate your business and look forward to helping you with your travel needs!</p>
+
+    <div class="footer">
+        <p><strong>{{ sender_name|default:"Your Travel Advisor" }}</strong></p>
+        <p>
+            Professional Travel Services<br>
+            Email: {{ sender_email|default:"info@yourbusiness.com" }}<br>
+            Phone: {{ sender_phone|default:"(555) 123-4567" }}
+        </p>
+        
+        <p style="font-size: 0.8em; margin-top: 20px;">
+            This invoice was sent via VacationDesktop CRM.<br>
+            If you have any questions about this invoice, please contact your travel advisor directly.
+        </p>
+    </div>
+</body>
+</html>

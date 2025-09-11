@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} - Travel Advisor CRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-0">{{ title }}</h1>
+                    <p class="text-muted">{% if client %}Update client information{% else %}Add a new client to your CRM{% endif %}</p>
+                </div>
+                <div>
+                    <a href="{% url 'client_list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Clients
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0">Client Information</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary border-bottom pb-2 mb-3">Basic Information</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="first_name" name="first_name" 
+                                           value="{% if client %}{{ client.first_name }}{% endif %}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="last_name" name="last_name" 
+                                           value="{% if client %}{{ client.last_name }}{% endif %}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                                    <input type="email" class="form-control" id="email" name="email" 
+                                           value="{% if client %}{{ client.email }}{% endif %}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="phone" class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" id="phone" name="phone" 
+                                           value="{% if client %}{{ client.phone }}{% endif %}" placeholder="(555) 123-4567">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Address Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary border-bottom pb-2 mb-3">Address Information</h6>
+                            </div>
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="address" class="form-label">Street Address</label>
+                                    <textarea class="form-control" id="address" name="address" rows="2" 
+                                              placeholder="123 Main Street">{% if client %}{{ client.address }}{% endif %}</textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="city" class="form-label">City</label>
+                                    <input type="text" class="form-control" id="city" name="city" 
+                                           value="{% if client %}{{ client.city }}{% endif %}" placeholder="New York">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="state" class="form-label">State</label>
+                                    <input type="text" class="form-control" id="state" name="state" 
+                                           value="{% if client %}{{ client.state }}{% endif %}" placeholder="NY">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="postal_code" class="form-label">ZIP Code</label>
+                                    <input type="text" class="form-control" id="postal_code" name="postal_code" 
+                                           value="{% if client %}{{ client.postal_code }}{% endif %}" placeholder="10001">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="country" class="form-label">Country</label>
+                                    <input type="text" class="form-control" id="country" name="country" 
+                                           value="{% if client %}{{ client.country }}{% else %}United States{% endif %}" placeholder="United States">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Business Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary border-bottom pb-2 mb-3">Business Information</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="lead_source" class="form-label">Lead Source</label>
+                                    <select class="form-select" id="lead_source" name="lead_source">
+                                        {% for value, label in lead_source_choices %}
+                                            <option value="{{ value }}" 
+                                                    {% if client and client.lead_source == value %}selected
+                                                    {% elif not client and value == 'WEBSITE' %}selected{% endif %}>
+                                                {{ label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="preferred_communication" class="form-label">Preferred Communication</label>
+                                    <select class="form-select" id="preferred_communication" name="preferred_communication">
+                                        {% for value, label in communication_choices %}
+                                            <option value="{{ value }}" 
+                                                    {% if client and client.preferred_communication == value %}selected
+                                                    {% elif not client and value == 'EMAIL' %}selected{% endif %}>
+                                                {{ label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="vip_status" class="form-label">VIP Status</label>
+                                    <select class="form-select" id="vip_status" name="vip_status">
+                                        <option value="REGULAR" {% if not client or client.vip_status == 'REGULAR' %}selected{% endif %}>Regular</option>
+                                        <option value="VIP" {% if client and client.vip_status == 'VIP' %}selected{% endif %}>VIP</option>
+                                        <option value="PREMIUM" {% if client and client.vip_status == 'PREMIUM' %}selected{% endif %}>Premium</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Travel Preferences -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary border-bottom pb-2 mb-3">Travel Preferences</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="budget_range_min" class="form-label">Minimum Budget</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="budget_range_min" name="budget_range_min" 
+                                               value="{% if client %}{{ client.budget_range_min }}{% endif %}" placeholder="5000">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="budget_range_max" class="form-label">Maximum Budget</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="budget_range_max" name="budget_range_max" 
+                                               value="{% if client %}{{ client.budget_range_max }}{% endif %}" placeholder="15000">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="preferred_destinations" class="form-label">Preferred Destinations</label>
+                                    <textarea class="form-control" id="preferred_destinations" name="preferred_destinations" rows="2" 
+                                              placeholder="Europe, Caribbean, Asia...">{% if client %}{{ client.preferred_destinations }}{% endif %}</textarea>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="travel_style" class="form-label">Travel Style</label>
+                                    <textarea class="form-control" id="travel_style" name="travel_style" rows="2" 
+                                              placeholder="Luxury, Adventure, Family-friendly, Budget...">{% if client %}{{ client.travel_style }}{% endif %}</textarea>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="special_needs" class="form-label">Special Needs & Notes</label>
+                                    <textarea class="form-control" id="special_needs" name="special_needs" rows="3" 
+                                              placeholder="Dietary restrictions, accessibility needs, allergies, preferences...">{% if client %}{{ client.special_needs }}{% endif %}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'client_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> {{ action }} Client
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Bootstrap Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+
+<script>
+// Simple form validation
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const firstNameInput = document.getElementById('first_name');
+    const lastNameInput = document.getElementById('last_name');
+    const emailInput = document.getElementById('email');
+    
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Check required fields
+        if (!firstNameInput.value.trim()) {
+            firstNameInput.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            firstNameInput.classList.remove('is-invalid');
+        }
+        
+        if (!lastNameInput.value.trim()) {
+            lastNameInput.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            lastNameInput.classList.remove('is-invalid');
+        }
+        
+        if (!emailInput.value.trim()) {
+            emailInput.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            emailInput.classList.remove('is-invalid');
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+        }
+    });
+});
+</script>
+{% endblock %}

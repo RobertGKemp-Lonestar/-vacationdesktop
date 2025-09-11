@@ -54,6 +54,7 @@ urlpatterns = [
     path('env-debug/', env_debug_view, name='env_debug_view'),
     path('admin-tenant-fix/', admin_tenant_fix_view, name='admin_tenant_fix_view'),
     path('', include('rbac.urls')),
+    path('crm/', include('business_management.urls')),
 ]
 
 # Serve static and media files during development

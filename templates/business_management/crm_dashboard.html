@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Travel Advisor CRM - Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-0">Travel Advisor CRM</h1>
+                    <p class="text-muted">Manage your clients, trips, and business</p>
+                </div>
+                <div>
+                    <a href="{% url 'client_create' %}" class="btn btn-primary">
+                        <i class="bi bi-person-plus"></i> Add New Client
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-primary bg-opacity-10 p-3 rounded">
+                                <i class="bi bi-people text-primary fs-4"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-title mb-0">Total Clients</h6>
+                            <h3 class="mb-0">{{ total_clients }}</h3>
+                            <small class="text-muted">{{ active_clients }} active</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-success bg-opacity-10 p-3 rounded">
+                                <i class="bi bi-airplane text-success fs-4"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-title mb-0">Total Trips</h6>
+                            <h3 class="mb-0">{{ total_trips }}</h3>
+                            <small class="text-muted">{{ upcoming_trips }} upcoming</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-info bg-opacity-10 p-3 rounded">
+                                <i class="bi bi-currency-dollar text-info fs-4"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-title mb-0">Total Revenue</h6>
+                            <h3 class="mb-0">${{ total_revenue|floatformat:0 }}</h3>
+                            <small class="text-muted">All time</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-warning bg-opacity-10 p-3 rounded">
+                                <i class="bi bi-credit-card text-warning fs-4"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-title mb-0">Pending Payments</h6>
+                            <h3 class="mb-0">${{ pending_payments|floatformat:0 }}</h3>
+                            <small class="text-muted">Outstanding</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Clients -->
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">Recent Clients</h6>
+                        <a href="{% url 'client_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if recent_clients %}
+                        {% for client in recent_clients %}
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="flex-shrink-0">
+                                <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <span class="text-primary fw-bold">{{ client.first_name|first }}{{ client.last_name|first }}</span>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-0">
+                                    <a href="{% url 'client_detail' client.id %}" class="text-decoration-none">
+                                        {{ client.full_name }}
+                                    </a>
+                                </h6>
+                                <small class="text-muted">{{ client.email }}</small>
+                                {% if client.vip_status != 'REGULAR' %}
+                                    <span class="badge bg-warning text-dark ms-1">{{ client.get_vip_status_display }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center py-3">No clients yet. <a href="{% url 'client_create' %}">Add your first client</a></p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Departures -->
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">Upcoming Departures</h6>
+                        <a href="{% url 'trip_list' %}?date_filter=upcoming" class="btn btn-sm btn-outline-success">View All</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_departures %}
+                        {% for trip in upcoming_departures %}
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="flex-shrink-0">
+                                <div class="bg-success bg-opacity-10 rounded d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-airplane text-success"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-0">
+                                    <a href="{% url 'trip_detail' trip.id %}" class="text-decoration-none">
+                                        {{ trip.trip_name|truncatechars:25 }}
+                                    </a>
+                                </h6>
+                                <small class="text-muted">{{ trip.client.full_name }}</small>
+                                <br>
+                                <small class="text-success fw-bold">{{ trip.departure_date|date:"M d, Y" }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center py-3">No upcoming departures</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Overdue Invoices -->
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">Overdue Invoices</h6>
+                        <a href="{% url 'invoice_list' %}?overdue=yes" class="btn btn-sm btn-outline-danger">View All</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if overdue_invoices %}
+                        {% for invoice in overdue_invoices %}
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="flex-shrink-0">
+                                <div class="bg-danger bg-opacity-10 rounded d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-exclamation-triangle text-danger"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-0">
+                                    <a href="{% url 'invoice_detail' invoice.id %}" class="text-decoration-none">
+                                        {{ invoice.invoice_number }}
+                                    </a>
+                                </h6>
+                                <small class="text-muted">{{ invoice.client.full_name }}</small>
+                                <br>
+                                <small class="text-danger fw-bold">${{ invoice.balance_due|floatformat:2 }} - Due {{ invoice.due_date|date:"M d" }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center py-3">No overdue invoices</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-md-2">
+                            <a href="{% url 'client_create' %}" class="btn btn-outline-primary w-100">
+                                <i class="bi bi-person-plus"></i><br>
+                                <small>Add Client</small>
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="{% url 'client_list' %}" class="btn btn-outline-secondary w-100">
+                                <i class="bi bi-people"></i><br>
+                                <small>View Clients</small>
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="{% url 'trip_list' %}" class="btn btn-outline-success w-100">
+                                <i class="bi bi-airplane"></i><br>
+                                <small>View Trips</small>
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="{% url 'invoice_list' %}" class="btn btn-outline-info w-100">
+                                <i class="bi bi-receipt"></i><br>
+                                <small>View Invoices</small>
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="{% url 'client_list' %}?vip=VIP" class="btn btn-outline-warning w-100">
+                                <i class="bi bi-star"></i><br>
+                                <small>VIP Clients</small>
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="{% url 'invoice_list' %}?overdue=yes" class="btn btn-outline-danger w-100">
+                                <i class="bi bi-exclamation-triangle"></i><br>
+                                <small>Overdue</small>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Bootstrap Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+{% endblock %}

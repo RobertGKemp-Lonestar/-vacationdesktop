@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trip Update</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .trip-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .content {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🌎 Trip Update</h1>
+        <p>Important information about your upcoming travel</p>
+    </div>
+
+    {% if trip %}
+    <div class="trip-info">
+        <h3>{{ trip.trip_name }}</h3>
+        <p><strong>Destination:</strong> {{ trip.destination }}</p>
+        <p><strong>Departure:</strong> {{ trip.departure_date|date:"F d, Y" }}</p>
+        <p><strong>Return:</strong> {{ trip.return_date|date:"F d, Y" }}</p>
+    </div>
+    {% endif %}
+
+    <div class="content">
+        {{ message|linebreaks }}
+    </div>
+
+    <p>If you have any questions about this update, please don't hesitate to contact me.</p>
+
+    <div class="footer">
+        <p><strong>{{ sender_name|default:"Your Travel Advisor" }}</strong></p>
+        <p>
+            Professional Travel Services<br>
+            Email: {{ sender_email|default:"info@yourbusiness.com" }}<br>
+            Phone: {{ sender_phone|default:"(555) 123-4567" }}
+        </p>
+        
+        <p style="font-size: 0.8em; margin-top: 20px;">
+            This update was sent via VacationDesktop CRM.
+        </p>
+    </div>
+</body>
+</html>

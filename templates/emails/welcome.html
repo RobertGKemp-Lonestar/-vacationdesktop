@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome!</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .content {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎉 Welcome!</h1>
+        <p>Let's start planning your perfect trip</p>
+    </div>
+
+    <div class="content">
+        <p>Dear {{ client.first_name }},</p>
+        
+        <p>Welcome to our travel family! I'm thrilled to have the opportunity to help you create unforgettable travel experiences.</p>
+        
+        {{ message|linebreaks }}
+        
+        <div class="highlight">
+            <h4>What's Next?</h4>
+            <p>I'll be reaching out soon to discuss your travel preferences, budget, and dream destinations. Together, we'll create the perfect itinerary just for you!</p>
+        </div>
+        
+        <p>In the meantime, feel free to start thinking about:</p>
+        <ul>
+            <li>Where you'd love to go</li>
+            <li>When you'd like to travel</li>
+            <li>What type of experience you're looking for</li>
+            <li>Your budget range</li>
+        </ul>
+        
+        <p>I'm here to make your travel dreams come true!</p>
+    </div>
+
+    <div class="footer">
+        <p><strong>{{ sender_name|default:"Your Travel Advisor" }}</strong></p>
+        <p>
+            Professional Travel Services<br>
+            Email: {{ sender_email|default:"info@yourbusiness.com" }}<br>
+            Phone: {{ sender_phone|default:"(555) 123-4567" }}
+        </p>
+        
+        <p style="font-size: 0.8em; margin-top: 20px;">
+            This welcome message was sent via VacationDesktop CRM.
+        </p>
+    </div>
+</body>
+</html>

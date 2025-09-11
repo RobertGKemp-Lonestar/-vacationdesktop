@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ trip.trip_name }} - Itinerary</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 2em;
+        }
+        .trip-overview {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+        .trip-overview .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        .trip-overview .stat {
+            text-align: center;
+            flex: 1;
+            min-width: 120px;
+            margin: 5px;
+        }
+        .trip-overview .stat-value {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+        .trip-overview .stat-label {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+        .itinerary-day {
+            background-color: #ffffff;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        .itinerary-day-header {
+            background-color: #667eea;
+            color: white;
+            padding: 15px 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+        .day-badge {
+            background-color: rgba(255,255,255,0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+            margin-right: 15px;
+            font-size: 0.9em;
+        }
+        .itinerary-day-content {
+            padding: 20px;
+        }
+        .activity-description {
+            white-space: pre-line;
+            line-height: 1.8;
+        }
+        .activity-tags {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+        }
+        .activity-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-right: 8px;
+            margin-bottom: 5px;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #dee2e6;
+            font-size: 0.9em;
+            color: #6c757d;
+            text-align: center;
+        }
+        .footer .contact-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+        .important-note {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .important-note .icon {
+            color: #856404;
+            margin-right: 8px;
+        }
+        @media (max-width: 600px) {
+            .trip-overview .stats {
+                flex-direction: column;
+            }
+            .trip-overview .stat {
+                margin: 10px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>✈️ {{ trip.trip_name }}</h1>
+        <p style="margin: 0; opacity: 0.9;">Your Complete Travel Itinerary</p>
+    </div>
+
+    <div class="trip-overview">
+        <h3 style="margin-top: 0; color: #333;">Trip Overview</h3>
+        <p><strong>Destination:</strong> {{ trip.destination }}</p>
+        <p><strong>Travel Dates:</strong> {{ trip.departure_date|date:"F d, Y" }} - {{ trip.return_date|date:"F d, Y" }}</p>
+        {% if trip.get_trip_type_display %}
+        <p><strong>Trip Type:</strong> {{ trip.get_trip_type_display }}</p>
+        {% endif %}
+        
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value">{{ itinerary_days.count }}</div>
+                <div class="stat-label">Day{{ itinerary_days.count|pluralize }}</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">{{ trip.number_of_travelers|default:1 }}</div>
+                <div class="stat-label">Traveler{{ trip.number_of_travelers|pluralize }}</div>
+            </div>
+            {% if trip.total_amount %}
+            <div class="stat">
+                <div class="stat-value">${{ trip.total_amount|floatformat:0 }}</div>
+                <div class="stat-label">Total Value</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if message %}
+    <div class="important-note">
+        <span class="icon">📌</span>
+        <strong>Special Message:</strong><br>
+        {{ message|linebreaks }}
+    </div>
+    {% endif %}
+
+    {% if trip.description %}
+    <div style="background-color: #e8f4fd; border: 1px solid #b8daff; border-radius: 6px; padding: 20px; margin: 20px 0;">
+        <h3 style="margin-top: 0; color: #0c63e4;">📖 About Your Trip</h3>
+        <div style="white-space: pre-line; line-height: 1.6;">{{ trip.description }}</div>
+    </div>
+    {% endif %}
+
+    {% if itinerary_days %}
+        <h2 style="color: #333; border-bottom: 2px solid #667eea; padding-bottom: 10px;">📅 Day-by-Day Itinerary</h2>
+        
+        {% for day in itinerary_days %}
+        <div class="itinerary-day">
+            <div class="itinerary-day-header">
+                <span class="day-badge">Day {{ day.day_number }}</span>
+                <span>{{ day.title|default:"Activities" }}</span>
+                {% if day.date %}
+                <span style="margin-left: auto; opacity: 0.8;">{{ day.date|date:"M d" }}</span>
+                {% endif %}
+            </div>
+            <div class="itinerary-day-content">
+                {% if day.description %}
+                <div class="activity-description">{{ day.description }}</div>
+                
+                <!-- Activity detection badges -->
+                <div class="activity-tags">
+                    {% if 'flight' in day.description|lower or 'plane' in day.description|lower %}
+                        <span class="activity-badge">✈️ Flight</span>
+                    {% endif %}
+                    {% if 'hotel' in day.description|lower or 'accommodation' in day.description|lower %}
+                        <span class="activity-badge">🏨 Accommodation</span>
+                    {% endif %}
+                    {% if 'tour' in day.description|lower %}
+                        <span class="activity-badge">📸 Tour</span>
+                    {% endif %}
+                    {% if 'meal' in day.description|lower or 'dinner' in day.description|lower or 'lunch' in day.description|lower or 'restaurant' in day.description|lower %}
+                        <span class="activity-badge">🍽️ Dining</span>
+                    {% endif %}
+                    {% if 'transport' in day.description|lower or 'transfer' in day.description|lower %}
+                        <span class="activity-badge">🚗 Transport</span>
+                    {% endif %}
+                    {% if 'free time' in day.description|lower %}
+                        <span class="activity-badge">🕐 Free Time</span>
+                    {% endif %}
+                </div>
+                {% else %}
+                <p style="color: #6c757d; font-style: italic;">Activities to be determined</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="important-note">
+            <span class="icon">📝</span>
+            <strong>Itinerary in Progress:</strong><br>
+            Your detailed day-by-day itinerary is currently being prepared and will be sent to you soon.
+        </div>
+    {% endif %}
+
+    {% if line_items %}
+    <div style="background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin: 30px 0;">
+        <h2 style="color: #333; margin-top: 0; margin-bottom: 20px; border-bottom: 2px solid #28a745; padding-bottom: 10px;">💰 Trip Investment Breakdown</h2>
+        
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; background-color: white; border-radius: 6px; overflow: hidden;">
+                <thead>
+                    <tr style="background-color: #28a745; color: white;">
+                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid #dee2e6;">Service</th>
+                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid #dee2e6;">Description</th>
+                        <th style="padding: 12px; text-align: right; border-bottom: 1px solid #dee2e6;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in line_items %}
+                    <tr style="{% cycle 'background-color: #f8f9fa;' '' %}">
+                        <td style="padding: 12px; border-bottom: 1px solid #dee2e6;">
+                            <strong>{{ item.get_item_type_display }}</strong>
+                            {% if item.supplier %}
+                            <br><small style="color: #6c757d;">{{ item.supplier }}</small>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 12px; border-bottom: 1px solid #dee2e6;">
+                            {{ item.description }}
+                            {% if item.service_date %}
+                            <br><small style="color: #6c757d;">{{ item.service_date|date:"M d, Y" }}</small>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 12px; text-align: right; border-bottom: 1px solid #dee2e6;">
+                            <strong>${{ item.total_price|floatformat:2 }}</strong>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr style="background-color: #28a745; color: white; font-weight: bold;">
+                        <td colspan="2" style="padding: 15px; text-align: right;">Total Trip Investment:</td>
+                        <td style="padding: 15px; text-align: right; font-size: 1.2em;">${{ line_items_total|floatformat:2 }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        
+        <div style="margin-top: 15px; padding: 15px; background-color: #d1ecf1; border: 1px solid #bee5eb; border-radius: 6px;">
+            <p style="margin: 0; color: #0c5460; font-size: 0.9em;">
+                <strong>💡 Note:</strong> This breakdown shows the components and value of your customized travel experience. 
+                All bookings and arrangements are handled professionally by our team to ensure your peace of mind.
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="important-note">
+        <span class="icon">💡</span>
+        <strong>Important Travel Tips:</strong><br>
+        • Please arrive at the airport at least 2 hours before domestic flights and 3 hours before international flights<br>
+        • Keep your travel documents easily accessible<br>
+        • Check weather conditions at your destination before packing<br>
+        • Contact us immediately if you have any changes or questions about your itinerary
+    </div>
+
+    <div class="footer">
+        <div class="contact-info">
+            <p><strong>{{ sender_name|default:"Your Travel Advisor" }}</strong><br>
+            Professional Travel Services</p>
+            <p>
+                📧 Email: {{ sender_email|default:"info@yourbusiness.com" }}<br>
+                📞 Phone: {{ sender_phone|default:"(555) 123-4567" }}
+            </p>
+        </div>
+        
+        <p style="margin-top: 20px;">
+            Have an amazing trip! 🌟<br>
+            <em>This itinerary was prepared with care using VacationDesktop CRM</em>
+        </p>
+    </div>
+</body>
+</html>

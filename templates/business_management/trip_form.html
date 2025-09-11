@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} - Travel Advisor CRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-0">{{ title }}</h1>
+                    <p class="text-muted">{% if trip %}Update trip information{% else %}Create a new trip for your client{% endif %}</p>
+                </div>
+                <div>
+                    <a href="{% url 'trip_list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Trips
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0">Trip Information</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Trip Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary border-bottom pb-2 mb-3">Basic Information</h6>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="client_id" class="form-label">Client <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="client_id" name="client_id" required {% if trip %}disabled{% endif %}>
+                                        <option value="">Select a client...</option>
+                                        {% for client in clients %}
+                                            <option value="{{ client.id }}" 
+                                                    {% if trip and trip.client.id == client.id %}selected
+                                                    {% elif not trip and client.id|default:"" %}selected{% endif %}>
+                                                {{ client.full_name }} ({{ client.email }})
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    {% if trip %}
+                                        <input type="hidden" name="client_id" value="{{ trip.client.id }}">
+                                        <small class="form-text text-muted">Client cannot be changed after trip creation</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="trip_name" class="form-label">Trip Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="trip_name" name="trip_name" 
+                                           value="{% if trip %}{{ trip.trip_name }}{% endif %}" 
+                                           placeholder="e.g., European Adventure, Honeymoon in Paris" required>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="trip_type" class="form-label">Trip Type <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="trip_type" name="trip_type" required onchange="toggleCustomTripType()">
+                                        {% for value, label in trip_type_choices %}
+                                            <option value="{{ value }}" 
+                                                    {% if trip and trip.trip_type == value %}selected
+                                                    {% elif not trip and value == 'CRUISE' %}selected{% endif %}>
+                                                {{ label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6" id="custom_trip_type_div" style="display: none;">
+                                <div class="mb-3">
+                                    <label for="custom_trip_type" class="form-label">Custom Trip Type</label>
+                                    <input type="text" class="form-control" id="custom_trip_type" name="custom_trip_type" 
+                                           value="{% if trip %}{{ trip.custom_trip_type }}{% endif %}" 
+                                           placeholder="Specify custom trip type">
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="destination" class="form-label">Destination <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="destination" name="destination" 
+                                           value="{% if trip %}{{ trip.destination }}{% endif %}" 
+                                           placeholder="e.g., Paris, France" required>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="number_of_travelers" class="form-label">Number of Travelers</label>
+                                    <input type="number" class="form-control" id="number_of_travelers" name="number_of_travelers" 
+                                           value="{% if trip %}{{ trip.number_of_travelers }}{% else %}1{% endif %}" 
+                                           min="1" placeholder="2">
+                                    <div class="form-text">Total number of people on this trip</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="total_amount" class="form-label">Actual Total Amount</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" step="0.01" class="form-control" id="total_amount" name="total_amount" 
+                                               value="{% if trip and trip.total_amount %}{{ trip.total_amount }}{% endif %}" 
+                                               placeholder="15000.00">
+                                    </div>
+                                    <div class="form-text">Final actual cost of the trip</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">Trip Description</label>
+                                    <textarea class="form-control" id="description" name="description" rows="3" 
+                                              placeholder="Brief description of the trip that will be included in emails to clients...">{% if trip %}{{ trip.description }}{% endif %}</textarea>
+                                    <div class="form-text">This description will be included in trip emails to clients</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Budget Range Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary border-bottom pb-2 mb-3">Budget Range</h6>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="budget_range_min" class="form-label">Minimum Budget</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" step="0.01" class="form-control" id="budget_range_min" name="budget_range_min" 
+                                               value="{% if trip and trip.budget_range_min %}{{ trip.budget_range_min }}{% endif %}" 
+                                               placeholder="5000.00">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="budget_range_max" class="form-label">Maximum Budget</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" step="0.01" class="form-control" id="budget_range_max" name="budget_range_max" 
+                                               value="{% if trip and trip.budget_range_max %}{{ trip.budget_range_max }}{% endif %}" 
+                                               placeholder="20000.00">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Travel Dates -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary border-bottom pb-2 mb-3">Travel Dates</h6>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="departure_date" class="form-label">Departure Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="departure_date" name="departure_date" 
+                                           value="{% if trip %}{{ trip.departure_date|date:'Y-m-d' }}{% endif %}" required>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="return_date" class="form-label">Return Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="return_date" name="return_date" 
+                                           value="{% if trip %}{{ trip.return_date|date:'Y-m-d' }}{% endif %}" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Trip Status (only for edit) -->
+                        {% if trip %}
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h6 class="text-primary border-bottom pb-2 mb-3">Trip Status</h6>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="status" class="form-label">Status</label>
+                                        <select class="form-select" id="status" name="status" onchange="toggleAutoInvoice()">
+                                            {% for value, label in status_choices %}
+                                                <option value="{{ value }}" 
+                                                        {% if trip and trip.status == value %}selected{% endif %}>
+                                                    {{ label }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6" id="auto_invoice_div" style="display: none;">
+                                    <div class="mb-3">
+                                        <div class="form-check mt-4">
+                                            <input class="form-check-input" type="checkbox" id="auto_create_invoice" name="auto_create_invoice">
+                                            <label class="form-check-label" for="auto_create_invoice">
+                                                <strong>Auto-create Invoice</strong><br>
+                                                <small class="text-muted">Automatically create a draft invoice when finalizing this trip</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <!-- Special Requests -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary border-bottom pb-2 mb-3">Additional Details</h6>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="special_requests" class="form-label">Special Requests & Notes</label>
+                                    <textarea class="form-control" id="special_requests" name="special_requests" rows="4" 
+                                              placeholder="Special requirements, dietary restrictions, accessibility needs, preferences...">{% if trip %}{{ trip.special_requests }}{% endif %}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'trip_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> {{ action }} Trip
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Bootstrap Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+
+<script>
+// Form validation and dynamic field handling
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const departureInput = document.getElementById('departure_date');
+    const returnInput = document.getElementById('return_date');
+    
+    // Initialize custom trip type visibility
+    toggleCustomTripType();
+    toggleAutoInvoice();
+    
+    // Validate dates
+    function validateDates() {
+        const departureDate = new Date(departureInput.value);
+        const returnDate = new Date(returnInput.value);
+        
+        if (departureDate && returnDate && departureDate >= returnDate) {
+            returnInput.setCustomValidity('Return date must be after departure date');
+            returnInput.classList.add('is-invalid');
+        } else {
+            returnInput.setCustomValidity('');
+            returnInput.classList.remove('is-invalid');
+        }
+    }
+    
+    departureInput.addEventListener('change', validateDates);
+    returnInput.addEventListener('change', validateDates);
+    
+    form.addEventListener('submit', function(e) {
+        validateDates();
+        
+        // Check required fields
+        let isValid = true;
+        const requiredFields = form.querySelectorAll('[required]');
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        // Validate custom trip type if OTHER is selected
+        const tripType = document.getElementById('trip_type').value;
+        const customTripType = document.getElementById('custom_trip_type');
+        if (tripType === 'OTHER' && !customTripType.value.trim()) {
+            customTripType.classList.add('is-invalid');
+            isValid = false;
+            alert('Please specify a custom trip type when "Other" is selected.');
+        } else {
+            customTripType.classList.remove('is-invalid');
+        }
+        
+        if (!isValid || returnInput.validity.customError) {
+            e.preventDefault();
+            alert('Please fill in all required fields correctly.');
+        }
+    });
+});
+
+function toggleCustomTripType() {
+    const tripType = document.getElementById('trip_type').value;
+    const customDiv = document.getElementById('custom_trip_type_div');
+    const customInput = document.getElementById('custom_trip_type');
+    
+    if (tripType === 'OTHER') {
+        customDiv.style.display = 'block';
+        customInput.required = true;
+    } else {
+        customDiv.style.display = 'none';
+        customInput.required = false;
+        customInput.value = '';
+    }
+}
+
+function toggleAutoInvoice() {
+    const status = document.getElementById('status').value;
+    const autoInvoiceDiv = document.getElementById('auto_invoice_div');
+    
+    if (status === 'FINALIZED') {
+        autoInvoiceDiv.style.display = 'block';
+    } else {
+        autoInvoiceDiv.style.display = 'none';
+        document.getElementById('auto_create_invoice').checked = false;
+    }
+}
+</script>
+{% endblock %}

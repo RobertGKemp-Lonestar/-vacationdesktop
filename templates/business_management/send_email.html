@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Email {{ client.full_name }} - Travel Advisor CRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-0">Send Email</h1>
+                    <p class="text-muted">Communicate with {{ client.full_name }} ({{ client.email }})</p>
+                </div>
+                <div>
+                    <a href="{% url 'client_detail' client.id %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Client
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Email Form -->
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0">Compose Email</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <!-- Recipient Info -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">To:</label>
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <span class="text-primary fw-bold">{{ client.first_name|first }}{{ client.last_name|first }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="mb-0">{{ client.full_name }}</h6>
+                                        <small class="text-muted">{{ client.email }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="template" class="form-label">Email Template</label>
+                                <select class="form-select" id="template" name="template" onchange="loadTemplate()">
+                                    {% for value, label in email_templates %}
+                                        <option value="{{ value }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Subject Line -->
+                        <div class="mb-3">
+                            <label for="subject" class="form-label">Subject <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="subject" name="subject" 
+                                   placeholder="Enter email subject..." required>
+                        </div>
+                        
+                        <!-- Message Body -->
+                        <div class="mb-4">
+                            <label for="message" class="form-label">Message <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="message" name="message" rows="10" 
+                                      placeholder="Type your message here..." required></textarea>
+                            <small class="form-text text-muted">Use a professional tone and include relevant trip or booking details</small>
+                        </div>
+                        
+                        <!-- Email Actions -->
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="follow_up" name="follow_up">
+                                <label class="form-check-label" for="follow_up">
+                                    Set follow-up reminder (7 days)
+                                </label>
+                            </div>
+                            
+                            <div>
+                                <button type="button" class="btn btn-outline-secondary me-2" onclick="saveDraft()">
+                                    <i class="bi bi-save"></i> Save Draft
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-send"></i> Send Email
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Communication History -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Recent Communications</h6>
+                    <a href="{% url 'client_communications' client.id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-clock-history"></i> View All
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if client.communications.all|slice:":5" %}
+                        {% for comm in client.communications.all|slice:":5" %}
+                            <div class="d-flex align-items-start mb-3">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-{% if comm.communication_type == 'EMAIL' %}info{% elif comm.communication_type == 'PHONE' %}success{% else %}secondary{% endif %} bg-opacity-10 rounded d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                        <i class="bi bi-{% if comm.communication_type == 'EMAIL' %}envelope{% elif comm.communication_type == 'PHONE' %}telephone{% else %}chat-dots{% endif %} text-{% if comm.communication_type == 'EMAIL' %}info{% elif comm.communication_type == 'PHONE' %}success{% else %}secondary{% endif %}"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-2">
+                                    <h6 class="mb-0 small">{{ comm.subject|truncatechars:30 }}</h6>
+                                    <small class="text-muted">{{ comm.created_at|date:"M d, g:i A" }}</small>
+                                    {% if comm.notes %}
+                                        <p class="small text-muted mt-1 mb-0">{{ comm.notes|truncatewords:10 }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center py-3">No previous communications</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary btn-sm" onclick="scheduleCall()">
+                            <i class="bi bi-telephone"></i> Schedule Call
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" onclick="addNote()">
+                            <i class="bi bi-sticky"></i> Add Note
+                        </button>
+                        <a href="{% url 'client_detail' client.id %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-person"></i> View Client Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Bootstrap Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+
+<script>
+// Email templates with predefined content
+const emailTemplates = {
+    'generic': {
+        subject: '',
+        message: 'Hi {{ client.first_name }},\n\nI hope this email finds you well.\n\n\n\nBest regards,\n[Your Name]'
+    },
+    'trip_update': {
+        subject: 'Update on Your Upcoming Trip',
+        message: 'Hi {{ client.first_name }},\n\nI wanted to provide you with an important update regarding your upcoming trip.\n\n\n\nPlease let me know if you have any questions.\n\nBest regards,\n[Your Name]'
+    },
+    'payment_reminder': {
+        subject: 'Payment Reminder - Invoice Due',
+        message: 'Hi {{ client.first_name }},\n\nThis is a friendly reminder that your invoice payment is due. Please let me know if you need any assistance with the payment process.\n\n\n\nThank you for your business.\n\nBest regards,\n[Your Name]'
+    },
+    'welcome': {
+        subject: 'Welcome! Let\'s Start Planning Your Perfect Trip',
+        message: 'Hi {{ client.first_name }},\n\nWelcome! I\'m thrilled to help you plan your upcoming travel experience.\n\nI\'ll be in touch soon to discuss your travel preferences and start creating the perfect itinerary for you.\n\n\n\nLooking forward to working with you!\n\nBest regards,\n[Your Name]'
+    }
+};
+
+function loadTemplate() {
+    const templateSelect = document.getElementById('template');
+    const subjectInput = document.getElementById('subject');
+    const messageTextarea = document.getElementById('message');
+    
+    const selectedTemplate = emailTemplates[templateSelect.value];
+    if (selectedTemplate) {
+        subjectInput.value = selectedTemplate.subject;
+        messageTextarea.value = selectedTemplate.message;
+    }
+}
+
+function saveDraft() {
+    // TODO: Implement save draft functionality
+    alert('Draft save functionality will be implemented in a future update.');
+}
+
+function scheduleCall() {
+    // TODO: Implement call scheduling
+    alert('Call scheduling functionality will be implemented in a future update.');
+}
+
+function addNote() {
+    // TODO: Implement quick note functionality
+    alert('Quick note functionality will be implemented in a future update.');
+}
+
+// Load default template on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadTemplate();
+});
+</script>
+{% endblock %}

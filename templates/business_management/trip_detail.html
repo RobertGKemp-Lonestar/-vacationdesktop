@@ -1,0 +1,821 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ trip.trip_name }} - Travel Advisor CRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-0">{{ trip.trip_name }}</h1>
+                    <p class="text-muted">{{ trip.destination }} • {{ trip.departure_date|date:"M d, Y" }} - {{ trip.return_date|date:"M d, Y" }}</p>
+                </div>
+                <div>
+                    <a href="{% url 'trip_list' %}" class="btn btn-outline-secondary me-2">
+                        <i class="bi bi-arrow-left"></i> Back to Trips
+                    </a>
+                    <a href="{% url 'trip_edit' trip.id %}" class="btn btn-primary">
+                        <i class="bi bi-pencil"></i> Edit Trip
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trip Status Banner -->
+    <div class="row mb-4">
+        <div class="col-12">
+            {% if trip.status == 'DRAFT' %}
+                <div class="alert alert-secondary d-flex align-items-center" role="alert">
+                    <i class="bi bi-info-circle me-2"></i>
+                    This trip is in draft status. Complete the details and confirm to proceed.
+                </div>
+            {% elif trip.status == 'CONFIRMED' %}
+                <div class="alert alert-success d-flex align-items-center" role="alert">
+                    <i class="bi bi-check-circle me-2"></i>
+                    Trip confirmed and ready to go!
+                    {% if days_until_departure %}
+                        {{ days_until_departure }} days until departure.
+                    {% endif %}
+                </div>
+            {% elif trip.status == 'IN_PROGRESS' %}
+                <div class="alert alert-info d-flex align-items-center" role="alert">
+                    <i class="bi bi-airplane me-2"></i>
+                    Trip is currently in progress. Have a great time!
+                </div>
+            {% elif trip.status == 'COMPLETED' %}
+                <div class="alert alert-primary d-flex align-items-center" role="alert">
+                    <i class="bi bi-star me-2"></i>
+                    Trip completed successfully. We hope you had a wonderful time!
+                </div>
+            {% elif trip.status == 'CANCELLED' %}
+                <div class="alert alert-danger d-flex align-items-center" role="alert">
+                    <i class="bi bi-x-circle me-2"></i>
+                    This trip has been cancelled.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Trip Details -->
+        <div class="col-md-8">
+            <!-- Basic Information -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0">Trip Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">Client:</dt>
+                                <dd class="col-sm-8">
+                                    <a href="{% url 'client_detail' trip.client.id %}" class="text-decoration-none">
+                                        {{ trip.client.full_name }}
+                                    </a>
+                                </dd>
+                                <dt class="col-sm-4">Destination:</dt>
+                                <dd class="col-sm-8">{{ trip.destination }}</dd>
+                                <dt class="col-sm-4">Departure:</dt>
+                                <dd class="col-sm-8">{{ trip.departure_date|date:"l, F d, Y" }}</dd>
+                                <dt class="col-sm-4">Return:</dt>
+                                <dd class="col-sm-8">{{ trip.return_date|date:"l, F d, Y" }}</dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">Status:</dt>
+                                <dd class="col-sm-8">
+                                    {% if trip.status == 'DRAFT' %}
+                                        <span class="badge bg-secondary">{{ trip.get_status_display }}</span>
+                                    {% elif trip.status == 'CONFIRMED' %}
+                                        <span class="badge bg-success">{{ trip.get_status_display }}</span>
+                                    {% elif trip.status == 'IN_PROGRESS' %}
+                                        <span class="badge bg-info">{{ trip.get_status_display }}</span>
+                                    {% elif trip.status == 'COMPLETED' %}
+                                        <span class="badge bg-primary">{{ trip.get_status_display }}</span>
+                                    {% elif trip.status == 'CANCELLED' %}
+                                        <span class="badge bg-danger">{{ trip.get_status_display }}</span>
+                                    {% endif %}
+                                </dd>
+                                <dt class="col-sm-4">Participants:</dt>
+                                <dd class="col-sm-8">{{ participants.count|default:1 }}</dd>
+                                <dt class="col-sm-4">Budget Range:</dt>
+                                <dd class="col-sm-8">
+                                    {% if trip.budget_range_display %}
+                                        <span class="text-info">{{ trip.budget_range_display }}</span>
+                                    {% else %}
+                                        <span class="text-muted">Not set</span>
+                                    {% endif %}
+                                </dd>
+                                <dt class="col-sm-4">Actual Total:</dt>
+                                <dd class="col-sm-8">
+                                    {% if trip.total_amount %}
+                                        <strong class="text-success">${{ trip.total_amount|floatformat:2 }}</strong>
+                                    {% else %}
+                                        <span class="text-muted">Not set</span>
+                                    {% endif %}
+                                </dd>
+                                <dt class="col-sm-4">Duration:</dt>
+                                <dd class="col-sm-8">
+                                    {% if trip.duration_days %}
+                                        {{ trip.duration_days }} day{{ trip.duration_days|pluralize }}
+                                    {% else %}
+                                        <span class="text-muted">Not set</span>
+                                    {% endif %}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                    
+                    {% if trip.special_requests %}
+                        <div class="mt-3">
+                            <h6>Special Requests & Notes</h6>
+                            <p>{{ trip.special_requests|linebreaks }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Trip Line Items -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Trip Components & Pricing</h6>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary" onclick="addLineItem()">
+                            <i class="bi bi-plus-circle"></i> Add Item
+                        </button>
+                        {% if line_items %}
+                        <button class="btn btn-outline-success" onclick="pushAllToInvoice()">
+                            <i class="bi bi-receipt"></i> Push All to Invoice
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if line_items %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                        <th>Supplier</th>
+                                        <th>Qty</th>
+                                        <th>Unit Price</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in line_items %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-primary">{{ item.get_item_type_display }}</span>
+                                        </td>
+                                        <td>{{ item.description }}</td>
+                                        <td>{{ item.supplier|default:"-" }}</td>
+                                        <td>{{ item.quantity }}</td>
+                                        <td>${{ item.unit_price|floatformat:2 }}</td>
+                                        <td><strong>${{ item.total_price|floatformat:2 }}</strong></td>
+                                        <td>
+                                            {% if item.is_confirmed %}
+                                                <span class="badge bg-success">Confirmed</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Pending</span>
+                                            {% endif %}
+                                            {% if item.is_paid %}
+                                                <span class="badge bg-info">Paid</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-secondary" onclick="editLineItem('{{ item.id }}')">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button class="btn btn-outline-success" onclick="pushToInvoice('{{ item.id }}')" title="Push to Invoice">
+                                                    <i class="bi bi-receipt"></i>
+                                                </button>
+                                                <button class="btn btn-outline-danger" onclick="deleteLineItem('{{ item.id }}')">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-primary text-white">
+                                        <th colspan="5">Total Trip Cost</th>
+                                        <th><strong>${{ line_items_total|floatformat:2 }}</strong></th>
+                                        <th colspan="2"></th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-list-check display-3 text-muted"></i>
+                            <h5 class="mt-3">No Trip Components Added</h5>
+                            <p class="text-muted">Add cruise, airfare, hotels, excursions and other trip components to track costs and bookings.</p>
+                            <button class="btn btn-primary" onclick="addLineItem()">
+                                <i class="bi bi-plus-circle"></i> Add First Item
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Participants -->
+            {% if participants %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-0">
+                        <h6 class="mb-0">Participants</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for participant in participants %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                <span class="text-primary fw-bold">{{ participant.first_name|first }}{{ participant.last_name|first }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="mb-0">{{ participant.first_name }} {{ participant.last_name }}</h6>
+                                            <small class="text-muted">{{ participant.get_participant_type_display }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Itinerary -->
+            {% if itinerary_days %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">Itinerary</h6>
+                        <a href="{% url 'trip_itinerary' trip.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-calendar-check"></i> Edit Itinerary
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        {% for day in itinerary_days %}
+                            <div class="border-start border-3 border-primary ps-3 mb-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="badge bg-primary me-2">Day {{ day.day_number }}</span>
+                                    <h6 class="mb-0">{{ day.title|default:"Day Activities" }}</h6>
+                                </div>
+                                {% if day.description %}
+                                    <p class="text-muted mb-0">{{ day.description|truncatewords:20 }}</p>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Communications -->
+            {% if communications %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-0">
+                        <h6 class="mb-0">Recent Communications</h6>
+                    </div>
+                    <div class="card-body">
+                        {% for comm in communications|slice:":5" %}
+                            <div class="d-flex align-items-start mb-3">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-info bg-opacity-10 rounded d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <i class="bi bi-envelope text-info"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-1">{{ comm.subject }}</h6>
+                                    <small class="text-muted">{{ comm.sent_at|date:"M d, Y g:i A" }}</small>
+                                    {% if comm.message %}
+                                        <p class="text-muted mt-1 mb-0">{{ comm.message|truncatewords:15 }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <!-- Quick Actions -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'trip_edit' trip.id %}" class="btn btn-outline-primary">
+                            <i class="bi bi-pencil"></i> Edit Trip Details
+                        </a>
+                        <a href="{% url 'trip_itinerary' trip.id %}" class="btn btn-outline-success">
+                            <i class="bi bi-calendar-check"></i> Manage Itinerary
+                        </a>
+                        <a href="{% url 'send_client_email' trip.client.id %}" class="btn btn-outline-info">
+                            <i class="bi bi-envelope"></i> Email Client
+                        </a>
+                        <button class="btn btn-outline-success" onclick="sendTripToClient()">
+                            <i class="bi bi-send"></i> Send Trip to Client
+                        </button>
+                        {% if trip.status == 'DRAFT' %}
+                            <button class="btn btn-success" onclick="confirmTrip()">
+                                <i class="bi bi-check-circle"></i> Confirm Trip
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trip Statistics -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0">Trip Statistics</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 border-end">
+                            <h4 class="text-primary mb-0">{{ participants.count|default:1 }}</h4>
+                            <small class="text-muted">Traveler{{ participants.count|pluralize }}</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-success mb-0">
+                                {% if trip.duration_days %}
+                                    {{ trip.duration_days }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </h4>
+                            <small class="text-muted">Day{{ trip.duration_days|pluralize }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Related Invoices -->
+            {% if invoices %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-0">
+                        <h6 class="mb-0">Related Invoices</h6>
+                    </div>
+                    <div class="card-body">
+                        {% for invoice in invoices %}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <a href="{% url 'invoice_detail' invoice.id %}" class="text-decoration-none">
+                                        {{ invoice.invoice_number }}
+                                    </a>
+                                    <br>
+                                    <small class="text-muted">{{ invoice.invoice_date|date:"M d, Y" }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <strong class="text-success">${{ invoice.total_amount|floatformat:2 }}</strong>
+                                    <br>
+                                    {% if invoice.status == 'PAID' %}
+                                        <span class="badge bg-success">{{ invoice.get_status_display }}</span>
+                                    {% elif invoice.status == 'SENT' %}
+                                        <span class="badge bg-warning">{{ invoice.get_status_display }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ invoice.get_status_display }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Send Trip Modal -->
+<div class="modal fade" id="sendTripModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Send Trip Information to Client</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Send complete trip information including itinerary to <strong>{{ trip.client.full_name }}</strong> ({{ trip.client.email }})?</p>
+                
+                <div class="mb-3">
+                    <label for="tripCustomMessage" class="form-label">Personal Message (Optional)</label>
+                    <textarea class="form-control" id="tripCustomMessage" rows="3" 
+                              placeholder="Add a personal message to include with the trip information..."></textarea>
+                    <div class="form-text">This message will appear at the top of the trip email</div>
+                </div>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="includeItinerary" checked>
+                    <label class="form-check-label" for="includeItinerary">
+                        Include detailed itinerary
+                    </label>
+                </div>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="includeLineItems">
+                    <label class="form-check-label" for="includeLineItems">
+                        Include pricing breakdown
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="sendTripEmail()">Send Trip Information</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Line Item Modal -->
+<div class="modal fade" id="lineItemModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="lineItemModalTitle">Add Trip Component</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="lineItemForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="lineItemAction" name="action" value="add_line_item">
+                    <input type="hidden" id="lineItemId" name="line_item_id">
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="itemType" class="form-label">Item Type</label>
+                                <select class="form-select" id="itemType" name="item_type" required>
+                                    <option value="">Select type...</option>
+                                    <option value="CRUISE">Cruise</option>
+                                    <option value="AIRFARE">Airfare</option>
+                                    <option value="HOTEL">Hotel/Accommodation</option>
+                                    <option value="TRANSFER">Transfer/Transportation</option>
+                                    <option value="EXCURSION">Shore Excursion/Tour</option>
+                                    <option value="INSURANCE">Travel Insurance</option>
+                                    <option value="VISA">Visa/Documentation</option>
+                                    <option value="RENTAL_CAR">Rental Car</option>
+                                    <option value="DINING">Dining/Meals</option>
+                                    <option value="ACTIVITIES">Activities/Entertainment</option>
+                                    <option value="FEES">Fees/Taxes</option>
+                                    <option value="OTHER">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="supplier" class="form-label">Supplier</label>
+                                <input type="text" class="form-control" id="supplier" name="supplier" 
+                                       placeholder="e.g., Royal Caribbean, Delta Airlines">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <input type="text" class="form-control" id="description" name="description" 
+                               placeholder="e.g., 7-night Caribbean cruise, Round-trip airfare" required>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="quantity" class="form-label">Quantity</label>
+                                <input type="number" class="form-control" id="quantity" name="quantity" 
+                                       value="1" min="1" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="unitPrice" class="form-label">Unit Price</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" step="0.01" class="form-control" id="unitPrice" name="unit_price" 
+                                           placeholder="0.00" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="totalPrice" class="form-label">Total Price</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" step="0.01" class="form-control" id="totalPrice" name="total_price" 
+                                           placeholder="0.00" readonly>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="serviceDate" class="form-label">Service Date</label>
+                                <input type="date" class="form-control" id="serviceDate" name="service_date">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="confirmationNumber" class="form-label">Confirmation Number</label>
+                                <input type="text" class="form-control" id="confirmationNumber" name="confirmation_number" 
+                                       placeholder="Optional">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="isConfirmed" name="is_confirmed">
+                                <label class="form-check-label" for="isConfirmed">Confirmed</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="isPaid" name="is_paid">
+                                <label class="form-check-label" for="isPaid">Paid</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveLineItem()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let lineItemModal = null;
+let sendTripModal = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    lineItemModal = new bootstrap.Modal(document.getElementById('lineItemModal'));
+    sendTripModal = new bootstrap.Modal(document.getElementById('sendTripModal'));
+    
+    // Auto-calculate total price
+    const quantityInput = document.getElementById('quantity');
+    const unitPriceInput = document.getElementById('unitPrice');
+    const totalPriceInput = document.getElementById('totalPrice');
+    
+    function updateTotalPrice() {
+        const quantity = parseFloat(quantityInput.value) || 0;
+        const unitPrice = parseFloat(unitPriceInput.value) || 0;
+        totalPriceInput.value = (quantity * unitPrice).toFixed(2);
+    }
+    
+    quantityInput.addEventListener('input', updateTotalPrice);
+    unitPriceInput.addEventListener('input', updateTotalPrice);
+});
+
+function addLineItem() {
+    if (!lineItemModal) {
+        lineItemModal = new bootstrap.Modal(document.getElementById('lineItemModal'));
+    }
+    
+    document.getElementById('lineItemModalTitle').textContent = 'Add Trip Component';
+    document.getElementById('lineItemAction').value = 'add_line_item';
+    document.getElementById('lineItemId').value = '';
+    document.getElementById('lineItemForm').reset();
+    
+    lineItemModal.show();
+}
+
+function editLineItem(itemId) {
+    // This would be implemented to load existing item data
+    console.log('Edit line item:', itemId);
+}
+
+function deleteLineItem(itemId) {
+    if (confirm('Are you sure you want to delete this item?')) {
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('action', 'delete_line_item');
+        formData.append('line_item_id', itemId);
+        
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'Failed to delete item');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while deleting');
+        });
+    }
+}
+
+function saveLineItem() {
+    const form = document.getElementById('lineItemForm');
+    const formData = new FormData(form);
+    
+    fetch(window.location.href, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            lineItemModal.hide();
+            location.reload();
+        } else {
+            alert(data.message || 'Failed to save item');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while saving');
+    });
+}
+
+function sendTripToClient() {
+    if (!sendTripModal) {
+        sendTripModal = new bootstrap.Modal(document.getElementById('sendTripModal'));
+    }
+    sendTripModal.show();
+}
+
+function sendTripEmail() {
+    const sendButton = document.querySelector('#sendTripModal .btn-primary');
+    const originalText = sendButton.textContent;
+    const customMessage = document.getElementById('tripCustomMessage').value;
+    const includeItinerary = document.getElementById('includeItinerary').checked;
+    const includeLineItems = document.getElementById('includeLineItems').checked;
+    
+    // Show loading state
+    sendButton.disabled = true;
+    sendButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Sending...';
+    
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    formData.append('action', 'send_trip_to_client');
+    formData.append('custom_message', customMessage);
+    formData.append('include_itinerary', includeItinerary ? 'on' : 'off');
+    formData.append('include_line_items', includeLineItems ? 'on' : 'off');
+    
+    fetch(window.location.href, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            sendTripModal.hide();
+            // Clear the message field for next use
+            document.getElementById('tripCustomMessage').value = '';
+            // Show success message
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                <i class="bi bi-check-circle me-2"></i>
+                ${data.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.container-fluid').firstChild);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        } else {
+            alert(data.message || 'Failed to send trip information');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while sending trip information');
+    })
+    .finally(() => {
+        // Reset button state
+        sendButton.disabled = false;
+        sendButton.textContent = originalText;
+    });
+}
+
+function confirmTrip() {
+    if (confirm('Are you sure you want to confirm this trip? This will change the status from Draft to Confirmed.')) {
+        // Add AJAX call to confirm trip
+        fetch('{% url "trip_confirm" trip.id %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Failed to confirm trip. Please try again.');
+            }
+        });
+    }
+}
+
+function pushToInvoice(lineItemId) {
+    if (confirm('Push this item to an invoice? If no invoice exists for this trip, a new one will be created.')) {
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('action', 'push_to_invoice');
+        formData.append('line_item_id', lineItemId);
+        
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                alertDiv.innerHTML = `
+                    <i class="bi bi-check-circle me-2"></i>
+                    ${data.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.container-fluid').firstChild);
+                
+                // Auto-dismiss after 5 seconds
+                setTimeout(() => {
+                    alertDiv.remove();
+                }, 5000);
+            } else {
+                alert(data.message || 'Failed to push item to invoice');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while pushing to invoice');
+        });
+    }
+}
+
+function pushAllToInvoice() {
+    if (confirm('Push all trip line items to an invoice? If no invoice exists for this trip, a new one will be created.')) {
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('action', 'push_all_to_invoice');
+        
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                alertDiv.innerHTML = `
+                    <i class="bi bi-check-circle me-2"></i>
+                    ${data.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.container-fluid').firstChild);
+                
+                // Auto-dismiss after 5 seconds
+                setTimeout(() => {
+                    alertDiv.remove();
+                }, 5000);
+            } else {
+                alert(data.message || 'Failed to push items to invoice');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while pushing to invoice');
+        });
+    }
+}
+</script>
+
+<!-- Add Bootstrap Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+{% endblock %}
