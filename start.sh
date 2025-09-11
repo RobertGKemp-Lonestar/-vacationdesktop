@@ -29,6 +29,24 @@ if [ -z "$PORT" ]; then
     export PORT=8000
 fi
 
+# Create media directories with proper permissions
+echo "📁 Creating media directories..."
+mkdir -p media/tenant_logos
+chmod 755 media
+chmod 755 media/tenant_logos
+
+# Test write permissions
+if touch media/tenant_logos/.test_write 2>/dev/null; then
+    rm -f media/tenant_logos/.test_write
+    echo "✅ Media directories created with proper write permissions"
+else
+    echo "⚠️ WARNING: Media directory may not be writable"
+fi
+
+# Debug media configuration
+echo "🔍 Running media configuration debug..."
+python manage.py debug_media
+
 # Wait for database with Django's connection handling
 echo "🔄 Waiting for database to be ready with Django..."
 for i in {1..30}; do
