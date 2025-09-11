@@ -259,6 +259,52 @@ def profile_edit_view(request):
 
 
 @login_required
+def tenant_settings_view(request):
+    """Tenant/Company settings view for CLIENT_ADMIN users"""
+    # Only allow CLIENT_ADMIN users to access tenant settings
+    if request.user.role.name not in ['CLIENT_ADMIN', 'SUPER_ADMIN', 'SYSTEM_ADMIN']:
+        messages.error(request, 'You do not have permission to access tenant settings.')
+        return redirect('dashboard')
+    
+    tenant = request.user.tenant
+    if not tenant:
+        messages.error(request, 'No tenant associated with your account.')
+        return redirect('dashboard')
+    
+    from .forms import TenantSettingsForm
+    
+    if request.method == 'POST':
+        form = TenantSettingsForm(request.POST, request.FILES, instance=tenant)
+        if form.is_valid():
+            form.save()
+            
+            # Log the tenant settings update
+            AuditLog.objects.create(
+                user=request.user,
+                tenant=request.user.tenant,
+                action='UPDATE',
+                resource_type='Tenant Settings',
+                resource_id=str(tenant.id),
+                ip_address=get_client_ip(request),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')[:200],
+                details={'fields_updated': list(form.changed_data)}
+            )
+            
+            messages.success(request, 'Company settings have been updated successfully!')
+            return redirect('tenant_settings')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = TenantSettingsForm(instance=tenant)
+    
+    return render(request, 'rbac/tenant_settings.html', {
+        'form': form,
+        'tenant': tenant,
+        'user': request.user
+    })
+
+
+@login_required
 def password_change_view(request):
     """Password change view"""
     from django.contrib.auth import update_session_auth_hash

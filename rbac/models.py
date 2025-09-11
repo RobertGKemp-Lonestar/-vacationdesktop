@@ -44,6 +44,9 @@ class Tenant(models.Model):
     plan_type = models.CharField(max_length=50, default='basic')
     max_users = models.PositiveIntegerField(default=5)
     
+    # Branding
+    logo = models.ImageField(upload_to='tenant_logos/', blank=True, null=True)
+    
     class Meta:
         db_table = 'tenants'
     

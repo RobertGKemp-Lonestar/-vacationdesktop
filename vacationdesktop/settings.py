@@ -41,6 +41,9 @@ if not DEBUG:
     if railway_domain and railway_domain not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append(railway_domain)
 
+# Site domain for absolute URLs in emails
+SITE_DOMAIN = config('SITE_DOMAIN', default='web-production-c5d67.up.railway.app' if not DEBUG else 'localhost:8000')
+
 
 # Application definition
 

@@ -76,11 +76,31 @@ class TenantEmailService:
             logger.warning(f"No email address for client {client.full_name}")
             return False, None
         
-        # Prepare context
+        # Prepare context with absolute URLs for logos and tenant info
+        tenant_logo_url = None
+        if self.tenant and self.tenant.logo:
+            # Create absolute URL for logo in emails
+            from django.contrib.sites.shortcuts import get_current_site
+            from django.urls import reverse
+            try:
+                # Try to get current site for absolute URL
+                domain = getattr(settings, 'SITE_DOMAIN', 'localhost:8000')
+                protocol = 'https' if not settings.DEBUG else 'http'
+                tenant_logo_url = f"{protocol}://{domain}{self.tenant.logo.url}"
+            except:
+                # Fallback to relative URL
+                tenant_logo_url = self.tenant.logo.url
+        
         email_context = {
             'client': client,
             'tenant': self.tenant,
+            'tenant_name': self.tenant.name if self.tenant else None,
+            'tenant_logo': tenant_logo_url,
             'subject': subject,
+            # Add tenant contact info for footer
+            'sender_email': self.tenant.contact_email if self.tenant else None,
+            'sender_phone': self.tenant.phone if self.tenant else None,
+            'sender_name': sender_name or (self.tenant.name if self.tenant else None),
             **(context or {})
         }
         

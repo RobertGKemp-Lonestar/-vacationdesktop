@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import PasswordChangeForm, PasswordResetForm, SetPasswordForm
-from .models import Role
+from .models import Role, Tenant
 
 # Use get_user_model() instead of direct import
 User = get_user_model()
@@ -247,3 +247,51 @@ class ChangeUserPasswordForm(forms.Form):
             self.user.set_password(self.cleaned_data['new_password1'])
             self.user.save()
         return self.user
+
+
+class TenantSettingsForm(forms.ModelForm):
+    """Form for managing tenant/company settings"""
+    
+    class Meta:
+        model = Tenant
+        fields = ['name', 'contact_email', 'phone', 'address', 'logo']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter company/business name'
+            }),
+            'contact_email': forms.EmailInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter business email address'
+            }),
+            'phone': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter business phone number'
+            }),
+            'address': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter business address',
+                'rows': 3
+            }),
+            'logo': forms.ClearableFileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/*'
+            }),
+        }
+        labels = {
+            'name': 'Business Name',
+            'contact_email': 'Business Email',
+            'phone': 'Business Phone',
+            'address': 'Business Address',
+            'logo': 'Company Logo'
+        }
+        help_texts = {
+            'logo': 'Upload your company logo (JPG, PNG). This will appear in email communications to clients.'
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make phone and address optional
+        self.fields['phone'].required = False
+        self.fields['address'].required = False
+        self.fields['logo'].required = False
