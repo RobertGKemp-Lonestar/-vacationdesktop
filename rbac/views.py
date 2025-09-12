@@ -284,6 +284,8 @@ def tenant_settings_view(request):
         # Debug logging
         logger.info(f"POST data received: {request.POST}")
         logger.info(f"FILES data received: {request.FILES}")
+        logger.info(f"MEDIA_ROOT setting: {settings.MEDIA_ROOT}")
+        logger.info(f"MEDIA_URL setting: {settings.MEDIA_URL}")
         
         if form.is_valid():
             try:
@@ -292,6 +294,22 @@ def tenant_settings_view(request):
                 logger.info(f"Before save - Old logo: {old_logo}")
                 logger.info(f"Form cleaned data logo: {form.cleaned_data.get('logo')}")
                 logger.info(f"Logo clear in POST: {'logo-clear' in request.POST}")
+                
+                # Check if logo file upload is working
+                if 'logo' in request.FILES:
+                    uploaded_file = request.FILES['logo']
+                    logger.info(f"Uploaded file name: {uploaded_file.name}")
+                    logger.info(f"Uploaded file size: {uploaded_file.size}")
+                    logger.info(f"Uploaded file content type: {uploaded_file.content_type}")
+                    
+                    # Test if media directory is writable
+                    import os
+                    media_root = settings.MEDIA_ROOT
+                    tenant_logos_dir = os.path.join(media_root, 'tenant_logos')
+                    logger.info(f"Media root exists: {os.path.exists(media_root)}")
+                    logger.info(f"Tenant logos dir exists: {os.path.exists(tenant_logos_dir)}")
+                    logger.info(f"Media root is writable: {os.access(media_root, os.W_OK) if os.path.exists(media_root) else 'N/A'}")
+                    logger.info(f"Tenant logos dir is writable: {os.access(tenant_logos_dir, os.W_OK) if os.path.exists(tenant_logos_dir) else 'N/A'}")
                 
                 saved_tenant = form.save()
                 logger.info(f"Tenant saved successfully. New logo: {saved_tenant.logo}")
