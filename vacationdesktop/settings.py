@@ -185,10 +185,19 @@ STATICFILES_DIRS = [
 ]
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+
+# Use Railway volume in production, local directory in development
+import os
+if not DEBUG and os.path.exists('/app/media'):
+    # Production: Use Railway persistent volume
+    MEDIA_ROOT = '/app/media'
+    print("📁 Using Railway persistent volume for media files: /app/media")
+else:
+    # Development: Use local media directory
+    MEDIA_ROOT = BASE_DIR / 'media'
+    print(f"📁 Using local media directory: {MEDIA_ROOT}")
 
 # Ensure media directories exist on startup
-import os
 os.makedirs(MEDIA_ROOT, exist_ok=True)
 os.makedirs(os.path.join(MEDIA_ROOT, 'tenant_logos'), exist_ok=True)
 

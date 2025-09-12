@@ -30,17 +30,29 @@ if [ -z "$PORT" ]; then
 fi
 
 # Create media directories with proper permissions
-echo "📁 Creating media directories..."
-mkdir -p media/tenant_logos
-chmod 755 media
-chmod 755 media/tenant_logos
+echo "📁 Setting up media directories..."
+
+# Check if Railway volume exists and use it, otherwise fallback to local
+if [ -d "/app/media" ]; then
+    echo "🚀 Using Railway persistent volume: /app/media"
+    MEDIA_DIR="/app/media"
+else
+    echo "🔧 Using local media directory for development"
+    MEDIA_DIR="media"
+fi
+
+# Create directories and set permissions
+mkdir -p "$MEDIA_DIR/tenant_logos"
+chmod 755 "$MEDIA_DIR" 2>/dev/null || echo "Note: chmod may not be available in container"
+chmod 755 "$MEDIA_DIR/tenant_logos" 2>/dev/null || echo "Note: chmod may not be available in container"
 
 # Test write permissions
-if touch media/tenant_logos/.test_write 2>/dev/null; then
-    rm -f media/tenant_logos/.test_write
-    echo "✅ Media directories created with proper write permissions"
+if touch "$MEDIA_DIR/tenant_logos/.test_write" 2>/dev/null; then
+    rm -f "$MEDIA_DIR/tenant_logos/.test_write"
+    echo "✅ Media directories configured with proper write permissions"
+    echo "📍 Media path: $MEDIA_DIR"
 else
-    echo "⚠️ WARNING: Media directory may not be writable"
+    echo "⚠️ WARNING: Media directory may not be writable: $MEDIA_DIR"
 fi
 
 # Debug media configuration
