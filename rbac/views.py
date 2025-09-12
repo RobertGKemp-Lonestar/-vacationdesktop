@@ -1,4 +1,5 @@
 import os
+import logging
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
@@ -15,6 +16,9 @@ from .forms import AddUserForm, EditUserForm, ChangeUserPasswordForm
 
 # Use get_user_model() instead of direct import
 User = get_user_model()
+
+# Initialize logger
+logger = logging.getLogger(__name__)
 
 # Import impersonation views
 from .impersonation import (

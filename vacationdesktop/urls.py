@@ -57,7 +57,9 @@ urlpatterns = [
     path('crm/', include('business_management.urls')),
 ]
 
-# Serve static and media files during development
+# Serve static and media files during development and production
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# Always serve media files (tenant logos, etc.) - needed for Railway deployment  
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
