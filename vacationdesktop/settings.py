@@ -192,6 +192,7 @@ if not DEBUG and os.path.exists('/app/media'):
     # Production: Use Railway persistent volume
     MEDIA_ROOT = '/app/media'
     print("📁 Using Railway persistent volume for media files: /app/media")
+    print(f"📁 MEDIA_ROOT set to: {MEDIA_ROOT}")
 else:
     # Development: Use local media directory
     MEDIA_ROOT = BASE_DIR / 'media'
