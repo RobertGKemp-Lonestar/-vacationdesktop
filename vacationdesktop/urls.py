@@ -30,6 +30,7 @@ from admin_debug import admin_debug_view
 from email_debug import email_debug_view
 from env_debug import env_debug_view
 from admin_tenant_fix import admin_tenant_fix_view
+from media_debug_view import media_debug_view
 
 def root_redirect(request):
     if request.user.is_authenticated:
@@ -53,6 +54,7 @@ urlpatterns = [
     path('email-debug/', email_debug_view, name='email_debug_view'),
     path('env-debug/', env_debug_view, name='env_debug_view'),
     path('admin-tenant-fix/', admin_tenant_fix_view, name='admin_tenant_fix_view'),
+    path('media-debug/', media_debug_view, name='media_debug_view'),
     path('', include('rbac.urls')),
     path('crm/', include('business_management.urls')),
 ]
@@ -62,4 +64,13 @@ if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
 
 # Always serve media files (tenant logos, etc.) - needed for Railway deployment  
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Force use Railway volume if it exists, otherwise use settings
+import os
+if os.path.exists('/app/media'):
+    media_root = '/app/media'
+    print(f"🔧 URL serving: Using Railway volume {media_root}")
+else:
+    media_root = settings.MEDIA_ROOT
+    print(f"🔧 URL serving: Using settings MEDIA_ROOT {media_root}")
+
+urlpatterns += static(settings.MEDIA_URL, document_root=media_root)
