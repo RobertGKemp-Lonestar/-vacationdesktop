@@ -295,3 +295,15 @@ class TenantSettingsForm(forms.ModelForm):
         self.fields['phone'].required = False
         self.fields['address'].required = False
         self.fields['logo'].required = False
+    
+    def save(self, commit=True):
+        tenant = super().save(commit=False)
+        
+        # Handle logo clearing more safely
+        if self.cleaned_data.get('logo') is False:  # This means the clear checkbox was checked
+            # Clear the logo field without trying to delete the file (Railway filesystem issues)
+            tenant.logo = None
+        
+        if commit:
+            tenant.save()
+        return tenant

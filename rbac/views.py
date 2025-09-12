@@ -1,3 +1,4 @@
+import os
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
@@ -282,8 +283,14 @@ def tenant_settings_view(request):
         
         if form.is_valid():
             try:
+                # Log before saving
+                old_logo = tenant.logo
+                logger.info(f"Before save - Old logo: {old_logo}")
+                logger.info(f"Form cleaned data logo: {form.cleaned_data.get('logo')}")
+                logger.info(f"Logo clear in POST: {'logo-clear' in request.POST}")
+                
                 saved_tenant = form.save()
-                logger.info(f"Tenant saved successfully. Logo: {saved_tenant.logo}")
+                logger.info(f"Tenant saved successfully. New logo: {saved_tenant.logo}")
                 
                 # Log the tenant settings update
                 AuditLog.objects.create(
@@ -300,7 +307,9 @@ def tenant_settings_view(request):
                 messages.success(request, 'Company settings have been updated successfully!')
                 return redirect('tenant_settings')
             except Exception as e:
+                import traceback
                 logger.error(f"Error saving tenant settings: {str(e)}")
+                logger.error(f"Full traceback: {traceback.format_exc()}")
                 messages.error(request, f'Error saving settings: {str(e)}')
         else:
             logger.error(f"Form validation errors: {form.errors}")
