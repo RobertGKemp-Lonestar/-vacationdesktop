@@ -59,6 +59,10 @@ fi
 echo "🔍 Running media configuration debug..."
 python manage.py debug_media
 
+# Verify Railway volume
+echo "🔍 Verifying Railway volume..."
+python manage.py verify_volume
+
 # Test upload functionality
 echo "🧪 Testing upload functionality..."
 python manage.py test_upload
